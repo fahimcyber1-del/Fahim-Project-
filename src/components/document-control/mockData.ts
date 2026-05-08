@@ -1,0 +1,70 @@
+import { DocumentRecord } from './types';
+
+export const INITIAL_DOCUMENTS: DocumentRecord[] = [
+  {
+    id: 'SOP-QA-001',
+    title: 'Standard Operating Procedure for Production Quality Checking',
+    category: 'SOP',
+    version: '1.2',
+    status: 'Published',
+    author: 'Alice QA',
+    reviewer: 'Bob Supervisor',
+    approver: 'Charlie Manager',
+    publisher: 'Charlie Manager',
+    dateCreated: '2023-01-10',
+    dateLastModified: '2023-06-15',
+    datePublished: '2023-06-16',
+    department: 'Quality Assurance',
+    description: 'Detailed SOP outlining the steps for daily production quality checking.',
+    attachments: []
+  },
+  {
+    id: 'POL-HR-005',
+    title: 'Workplace Safety Policy',
+    category: 'Policy',
+    version: '2.0',
+    status: 'In Review',
+    author: 'David HR',
+    reviewer: 'Eve Health&Safety',
+    approver: 'Frank Director',
+    publisher: 'System Admin',
+    dateCreated: '2023-09-01',
+    dateLastModified: '2023-09-10',
+    department: 'Human Resources',
+    description: 'Updated safety policy covering emergency procedures and reporting.',
+    attachments: []
+  },
+  {
+    id: 'FRM-FIN-012',
+    title: 'Travel Expense Reimbursement Form',
+    category: 'Form',
+    version: '1.0',
+    status: 'Published',
+    author: 'Grace Finance',
+    reviewer: 'Hank Accountant',
+    approver: 'Ivy CFO',
+    publisher: 'Ivy CFO',
+    dateCreated: '2022-11-20',
+    dateLastModified: '2022-11-20',
+    datePublished: '2022-11-22',
+    department: 'Finance',
+    description: 'Form to be filled out by employees requesting travel reimbursement.',
+    attachments: []
+  },
+  {
+    id: 'MAN-IT-003',
+    title: 'IT Systems Administration Manual',
+    category: 'Manual',
+    version: '3.1',
+    status: 'Draft',
+    author: 'Jack IT',
+    reviewer: 'Karen TechLead',
+    approver: 'Liam CIO',
+    publisher: 'System Admin',
+    dateCreated: '2024-01-05',
+    dateLastModified: '2024-01-15',
+    department: 'Information Technology',
+    description: 'Comprehensive manual for sysadmins managing the internal servers.',
+    attachments: []
+  }
+];

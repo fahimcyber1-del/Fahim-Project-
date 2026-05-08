@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-roboto: "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --font-space-grotesk: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  
+  /* Override indigo color to be the dynamic accent color */
+  --color-indigo-50: var(--accent-50);
+  --color-indigo-100: var(--accent-100);
+  --color-indigo-200: var(--accent-200);
+  --color-indigo-300: var(--accent-300);
+  --color-indigo-400: var(--accent-400);
+  --color-indigo-500: var(--accent-500);
+  --color-indigo-600: var(--accent-600);
+  --color-indigo-700: var(--accent-700);
+  --color-indigo-800: var(--accent-800);
+  --color-indigo-900: var(--accent-900);
+  --color-indigo-950: var(--accent-950);
+
+  /* Map primary to indigo for backwards compatibility with previous modifications */
+  --color-primary-50: var(--accent-50);
+  --color-primary-100: var(--accent-100);
+  --color-primary-200: var(--accent-200);
+  --color-primary-300: var(--accent-300);
+  --color-primary-400: var(--accent-400);
+  --color-primary-500: var(--accent-500);
+  --color-primary-600: var(--accent-600);
+  --color-primary-700: var(--accent-700);
+  --color-primary-800: var(--accent-800);
+  --color-primary-900: var(--accent-900);
+  --color-primary-950: var(--accent-950);
+}
+
+:root {
+  /* Default indigo */
+  --accent-50: #eef2ff;
+  --accent-100: #e0e7ff;
+  --accent-200: #c7d2fe;
+  --accent-300: #a5b4fc;
+  --accent-400: #818cf8;
+  --accent-500: #6366f1;
+  --accent-600: #4f46e5;
+  --accent-700: #4338ca;
+  --accent-800: #3730a3;
+  --accent-900: #312e81;
+  --accent-950: #1e1b4b;
+}
+
+[data-accent="blue"] {
+  --accent-50: #eff6ff;
+  --accent-100: #dbeafe;
+  --accent-200: #bfdbfe;
+  --accent-300: #93c5fd;
+  --accent-400: #60a5fa;
+  --accent-500: #3b82f6;
+  --accent-600: #2563eb;
+  --accent-700: #1d4ed8;
+  --accent-800: #1e40af;
+  --accent-900: #1e3a8a;
+  --accent-950: #172554;
+}
+
+[data-accent="rose"] {
+  --accent-50: #fff1f2;
+  --accent-100: #ffe4e6;
+  --accent-200: #fecdd3;
+  --accent-300: #fda4af;
+  --accent-400: #fb7185;
+  --accent-500: #f43f5e;
+  --accent-600: #e11d48;
+  --accent-700: #be123c;
+  --accent-800: #9f1239;
+  --accent-900: #881337;
+  --accent-950: #4c0519;
+}
+
+[data-accent="emerald"] {
+  --accent-50: #ecfdf5;
+  --accent-100: #d1fae5;
+  --accent-200: #a7f3d0;
+  --accent-300: #6ee7b7;
+  --accent-400: #34d399;
+  --accent-500: #10b981;
+  --accent-600: #059669;
+  --accent-700: #047857;
+  --accent-800: #065f46;
+  --accent-900: #064e3b;
+  --accent-950: #022c22;
+}
+
+[data-accent="amber"] {
+  --accent-50: #fffbeb;
+  --accent-100: #fef3c7;
+  --accent-200: #fde68a;
+  --accent-300: #fcd34d;
+  --accent-400: #fbbf24;
+  --accent-500: #f59e0b;
+  --accent-600: #d97706;
+  --accent-700: #b45309;
+  --accent-800: #92400e;
+  --accent-900: #78350f;
+  --accent-950: #451a03;
+}
+
+[data-accent="slate"] {
+  --accent-50: #f8fafc;
+  --accent-100: #f1f5f9;
+  --accent-200: #e2e8f0;
+  --accent-300: #cbd5e1;
+  --accent-400: #94a3b8;
+  --accent-500: #64748b;
+  --accent-600: #475569;
+  --accent-700: #334155;
+  --accent-800: #1e293b;
+  --accent-900: #0f172a;
+  --accent-950: #020617;
+}
+
+div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) {
+  display: none !important;
+}
+
+@media (max-width: 1024px) {
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

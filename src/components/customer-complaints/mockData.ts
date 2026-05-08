@@ -1,0 +1,46 @@
+import { CustomerComplaintRecord } from './types';
+
+export const INITIAL_COMPLAINTS: CustomerComplaintRecord[] = [
+  {
+    id: 'CMP-2024-001',
+    dateReceived: '2024-05-01',
+    customerName: 'Global Retailers Inc.',
+    orderRef: 'ORD-98765',
+    styleNo: 'AW24-JKT-01',
+    category: 'Quality',
+    severity: 'High',
+    status: 'In Progress',
+    description: 'Received shipment of 500 jackets. 45 of them have defective zippers that do not close properly.',
+    assignedTo: 'Jane Smith',
+    attachments: [],
+  },
+  {
+    id: 'CMP-2024-002',
+    dateReceived: '2024-04-28',
+    customerName: 'Fashion Forward',
+    orderRef: 'ORD-98721',
+    styleNo: 'SS24-TSH-05',
+    category: 'Delivery',
+    severity: 'Medium',
+    status: 'Resolved',
+    description: 'Shipment arrived 3 days later than the agreed upon date without prior notification.',
+    rootCause: 'Carrier delay at customs.',
+    correctiveAction: 'Switched to a more reliable logistics partner for this route and implemented proactive tracking alerts.',
+    assignedTo: 'Mike Johnson',
+    dateResolved: '2024-04-30',
+    attachments: [],
+  },
+  {
+    id: 'CMP-2024-003',
+    dateReceived: '2024-05-02',
+    customerName: 'Eco Wear Ltd.',
+    orderRef: 'ORD-99001',
+    styleNo: 'AW24-PNT-02',
+    category: 'Quality',
+    severity: 'Critical',
+    status: 'Open',
+    description: 'Fabric used is not the specified organic cotton blend. Fabric feels much coarser.',
+    assignedTo: 'Sarah Lee',
+    attachments: [],
+  }
+];

@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState } from 'react';
 import { Shield, Lock, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 
@@ -18,7 +19,7 @@ export function Login({ onLogin }: LoginProps) {
 
     setTimeout(() => {
       // Fetch users
-      const storedUsers = localStorage.getItem('aqm_users');
+      const storedUsers = apiStorage.getItem('aqm_users');
       let users: any[] = [];
       if (storedUsers) {
         try {
@@ -43,7 +44,7 @@ export function Login({ onLogin }: LoginProps) {
             lastActive: 'Just now',
           }
         ];
-        localStorage.setItem('aqm_users', JSON.stringify(users));
+        apiStorage.setItem('aqm_users', JSON.stringify(users));
       }
 
       const searchId = identifier.trim().toLowerCase();

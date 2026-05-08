@@ -2,6 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
+import { apiStorage } from './utils/apiStorage';
 import { useState, useEffect } from "react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
@@ -58,13 +59,13 @@ export default function App() {
 
   useEffect(() => {
     // Check if user is logged in
-    const storedUser = localStorage.getItem('aqm_current_user');
+    const storedUser = apiStorage.getItem('aqm_current_user');
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
         setIsAuthenticated(true);
         // Sync to profile format expected
-        localStorage.setItem('userProfile', JSON.stringify({
+        apiStorage.setItem('userProfile', JSON.stringify({
           name: user?.name || 'Admin',
           email: user?.email || 'admin@example.com',
           role: user?.role || 'User',
@@ -72,7 +73,7 @@ export default function App() {
         }));
       } catch (e) {
         console.error("Invalid user JSON:", e);
-        localStorage.removeItem('aqm_current_user');
+        apiStorage.removeItem('aqm_current_user');
       }
     }
 
@@ -84,7 +85,7 @@ export default function App() {
     };
     
     const handleLogout = () => {
-      localStorage.removeItem('aqm_current_user');
+      apiStorage.removeItem('aqm_current_user');
       setIsAuthenticated(false);
     };
 
@@ -97,7 +98,7 @@ export default function App() {
   }, []);
 
   const handleLogin = (user: any) => {
-    localStorage.setItem('aqm_current_user', JSON.stringify(user));
+    apiStorage.setItem('aqm_current_user', JSON.stringify(user));
     
     // Sync to profile format expected and dispatch event
     const userProfile = {
@@ -106,7 +107,7 @@ export default function App() {
       role: user?.role || 'User',
       imageUrl: user?.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`
     };
-    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    apiStorage.setItem('userProfile', JSON.stringify(userProfile));
     window.dispatchEvent(new CustomEvent('profile-updated', { detail: userProfile }));
     
     setIsAuthenticated(true);

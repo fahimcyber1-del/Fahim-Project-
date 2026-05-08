@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, CertificateRecord } from './types';
 import { mockCertificates } from './mockData';
@@ -9,7 +10,7 @@ import { LayoutDashboard, Award, PlusCircle } from 'lucide-react';
 
 export function CertificateModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<CertificateRecord[]>(mockCertificates);
+  const [records, setRecords] = useApiStorage<CertificateRecord>('aqm_certificate_records', mockCertificates);
 
   const handleSave = (data: CertificateRecord) => {
     setRecords([data, ...records]);

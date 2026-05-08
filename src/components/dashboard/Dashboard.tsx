@@ -30,40 +30,15 @@ import { INITIAL_RECORDS as INITIAL_INSPECTIONS } from "../inspection/mockData";
 import { INITIAL_RECORDS as INITIAL_PRODUCTION } from "../production-quality/mockData";
 import { INITIAL_ORDERS } from "../orders-buyers/mockData";
 import { format, parseISO, subMonths } from "date-fns";
+import { useApiData, apiFetch, apiSave } from "../../hooks/useApiData";
 
 export function Dashboard() {
-  const [data, setData] = useState({
-    capas: INITIAL_CAPAS,
-    inspections: INITIAL_INSPECTIONS,
-    productions: INITIAL_PRODUCTION,
-    orders: INITIAL_ORDERS,
-  });
+  const capas = useApiData('aqm_capa_records', INITIAL_CAPAS);
+  const inspections = useApiData('aqm_inspection_records', INITIAL_INSPECTIONS);
+  const productions = useApiData('aqm_productionquality_records', INITIAL_PRODUCTION);
+  const orders = useApiData('aqm_ordersbuyers_orders', INITIAL_ORDERS);
 
-  useEffect(() => {
-    const loadData = () => {
-      try {
-        const storedCapas = localStorage.getItem('aqm_capas');
-        const storedInspections = localStorage.getItem('aqm_inspections');
-        const storedProductions = localStorage.getItem('aqm_production');
-        const storedOrders = localStorage.getItem('aqm_orders');
-
-        setData({
-          capas: storedCapas ? JSON.parse(storedCapas) : INITIAL_CAPAS,
-          inspections: storedInspections ? JSON.parse(storedInspections) : INITIAL_INSPECTIONS,
-          productions: storedProductions ? JSON.parse(storedProductions) : INITIAL_PRODUCTION,
-          orders: storedOrders ? JSON.parse(storedOrders) : INITIAL_ORDERS,
-        });
-      } catch (e) {
-        console.error("Failed to load data for dashboard:", e);
-      }
-    };
-
-    loadData();
-    
-    // Optional: Refresh on focus
-    window.addEventListener('focus', loadData);
-    return () => window.removeEventListener('focus', loadData);
-  }, []);
+  const data = { capas, inspections, productions, orders };
 
   // Compute Metrics
   let totalInspected = 0;
@@ -98,11 +73,12 @@ export function Dashboard() {
   const qualityPassRate = totalInspected > 0 ? (totalPassed / totalInspected) * 100 : 0;
   const totalDHU = totalInspected > 0 ? (totalDefected / totalInspected) * 100 : 0;
   const activeCapas = data.capas.filter((c: any) => c.status !== 'Closed').length;
+
   const pendingInspections = data.inspections.filter((i: any) => i.status === 'Pending' || i.status === 'Recheck').length;
   const resolvedIssues = data.capas.filter((c: any) => c.status === 'Closed').length;
 
-  const passRateData = [
-    { name: "Pass", value: qualityPassRate, color: "#10b981" },
+  const rftRateData = [
+    { name: "RFT (Pass)", value: qualityPassRate, color: "#10b981" },
     { name: "Fail/Rework", value: 100 - qualityPassRate, color: "#ef4444" },
   ];
 
@@ -192,7 +168,7 @@ export function Dashboard() {
       month: m.label,
       inspected: totalIns,
       passed: totalPass,
-      passRate: parseFloat(pRate.toFixed(1))
+      rftRate: parseFloat(pRate.toFixed(1))
     };
   });
 
@@ -200,11 +176,11 @@ export function Dashboard() {
     window.dispatchEvent(new CustomEvent('app-navigate', { detail: { module } }));
   };
 
-  const topMetrics = [
+    const topMetrics = [
     { title: "Total Order Pcs", value: totalOrderPcs.toLocaleString(), icon: Package, color: "text-blue-600", bg: "bg-blue-50/50", border: 'border-blue-100', route: 'orders_and_buyers' },
     { title: "Total Checked", value: totalInspected.toLocaleString(), icon: LayoutList, color: "text-indigo-600", bg: "bg-indigo-50/50", border: 'border-indigo-100', route: 'production_quality' },
     { title: "Total DHU", value: `${totalDHU.toFixed(1)}%`, icon: Target, color: "text-rose-600", bg: "bg-rose-50/50", border: 'border-rose-100', route: 'production_quality' },
-    { title: "Total RFT", value: totalPassed.toLocaleString(), icon: ClipboardCheck, color: "text-emerald-600", bg: "bg-emerald-50/50", border: 'border-emerald-100', route: 'production_quality' }
+    { title: "Avg RFT Percentage", value: `${qualityPassRate.toFixed(1)}%`, icon: ClipboardCheck, color: "text-emerald-600", bg: "bg-emerald-50/50", border: 'border-emerald-100', route: 'production_quality' }
   ];
 
   const inspectionMetrics = [
@@ -336,20 +312,20 @@ export function Dashboard() {
 
         <Card className="col-span-1 lg:col-span-3 shadow-sm border-slate-200 flex flex-col">
           <CardHeader className="-mb-2">
-            <CardTitle>Overall Pass Rate Status</CardTitle>
+            <CardTitle>Overall RFT Rate Status</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center flex-col items-center flex-1 relative">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none mt-2">
                <div className="text-center">
                  <p className="text-3xl font-black text-slate-900">{qualityPassRate.toFixed(1)}%</p>
-                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Average</p>
+                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Average RFT</p>
                </div>
             </div>
             <div className="h-[250px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={passRateData}
+                    data={rftRateData}
                     cx="50%"
                     cy="50%"
                     innerRadius={70}
@@ -359,7 +335,7 @@ export function Dashboard() {
                     stroke="none"
                     cornerRadius={4}
                   >
-                    {passRateData.map((entry, index) => (
+                    {rftRateData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -377,7 +353,7 @@ export function Dashboard() {
 
         <Card className="col-span-1 lg:col-span-4 shadow-sm border-slate-200 flex flex-col">
           <CardHeader className="-mb-2">
-            <CardTitle>Production Volume vs Pass Rate</CardTitle>
+            <CardTitle>Production Volume vs RFT Rate</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
             <div className="h-[300px] w-full mt-4">
@@ -394,7 +370,7 @@ export function Dashboard() {
                   <Legend verticalAlign="bottom" height={36} formatter={(value) => <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{value}</span>} />
                   <Bar yAxisId="left" dataKey="inspected" name="Inspected" fill="#e2e8f0" radius={[4, 4, 0, 0]} maxBarSize={40} />
                   <Bar yAxisId="left" dataKey="passed" name="Passed" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Line yAxisId="right" type="monotone" name="Pass Rate (%)" dataKey="passRate" stroke="#6366f1" strokeWidth={3} dot={{r: 4, strokeWidth: 0, fill: '#6366f1'}} activeDot={{ r: 6 }} />
+                  <Line yAxisId="right" type="monotone" name="RFT Rate (%)" dataKey="rftRate" stroke="#6366f1" strokeWidth={3} dot={{r: 4, strokeWidth: 0, fill: '#6366f1'}} activeDot={{ r: 6 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

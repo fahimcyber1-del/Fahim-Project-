@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState, useEffect } from 'react';
 import { Buyer, Order } from './types';
 import { INITIAL_BUYERS, INITIAL_ORDERS } from './mockData';
@@ -15,8 +16,8 @@ interface OrdersBuyersModuleProps {
 
 export function OrdersBuyersModule({ navigationPayload, onNavigationHandled }: OrdersBuyersModuleProps = {}) {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [buyers, setBuyers] = useState<Buyer[]>(INITIAL_BUYERS);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [buyers, setBuyers] = useApiStorage('aqm_ordersbuyers_buyers', INITIAL_BUYERS);
+  const [orders, setOrders] = useApiStorage('aqm_ordersbuyers_orders', INITIAL_ORDERS);
   const [externalViewOrderId, setExternalViewOrderId] = useState<string | null>(null);
 
   useEffect(() => {

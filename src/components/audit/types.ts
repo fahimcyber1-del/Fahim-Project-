@@ -26,6 +26,19 @@ export interface AuditRecord {
   isoQuestions?: IsoQuestion[];
   remarks?: string;
   attachments?: { name: string; type: string; data: string }[];
+  signature?: string;
+  signatureImage?: string;
+  signatureDesignation?: string;
+  signatureDate?: string;
+  signatures?: AuditSignature[];
+}
+
+export interface AuditSignature {
+  id: string;
+  name: string;
+  designation: string;
+  date: string;
+  image?: string;
 }
 
 export interface AuditFinding {

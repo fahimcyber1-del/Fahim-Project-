@@ -1,10 +1,11 @@
+import { apiStorage } from '../utils/apiStorage';
 export const logAuditActivity = (action: string, module: string, details: string) => {
   try {
-    const rawLogs = localStorage.getItem('aqm_activity_log');
+    const rawLogs = apiStorage.getItem('aqm_activity_log');
     let logs = rawLogs ? JSON.parse(rawLogs) : [];
     
     let user = 'Unknown User';
-    const userRaw = localStorage.getItem('userProfile');
+    const userRaw = apiStorage.getItem('userProfile');
     if (userRaw) {
       try {
         user = JSON.parse(userRaw)?.name || 'Unknown User';
@@ -30,7 +31,7 @@ export const logAuditActivity = (action: string, module: string, details: string
       logs = logs.slice(0, maxLogs);
     }
     
-    localStorage.setItem('aqm_activity_log', JSON.stringify(logs));
+    apiStorage.setItem('aqm_activity_log', JSON.stringify(logs));
   } catch (err) {
     console.error('Failed to log audit activity:', err);
   }

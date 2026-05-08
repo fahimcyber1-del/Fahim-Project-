@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState } from 'react';
 import { Shield, Key, Smartphone, Clock, Globe, Lock, AlertTriangle, Eye, EyeOff, Save, ShieldCheck } from 'lucide-react';
 
@@ -6,7 +7,7 @@ export function SecuritySettings() {
   
   const [settings, setSettings] = useState(() => {
     try {
-      const stored = localStorage.getItem('aqm_security_settings');
+      const stored = apiStorage.getItem('aqm_security_settings');
       if (stored) return JSON.parse(stored);
     } catch (e) {
       console.error(e);
@@ -25,7 +26,7 @@ export function SecuritySettings() {
 
   const [activeSessions, setActiveSessions] = useState(() => {
     try {
-      const stored = localStorage.getItem('aqm_active_sessions');
+      const stored = apiStorage.getItem('aqm_active_sessions');
       if (stored) return JSON.parse(stored);
     } catch (e) {
       console.error(e);
@@ -40,7 +41,7 @@ export function SecuritySettings() {
   const handleRevoke = (id: number) => {
     setActiveSessions((prev: any) => {
       const newSessions = prev.filter((s: any) => s.id !== id);
-      localStorage.setItem('aqm_active_sessions', JSON.stringify(newSessions));
+      apiStorage.setItem('aqm_active_sessions', JSON.stringify(newSessions));
       return newSessions;
     });
   };
@@ -48,7 +49,7 @@ export function SecuritySettings() {
   const clearSessions = () => {
     setActiveSessions((prev: any) => {
       const newSessions = prev.filter((s: any) => s.current);
-      localStorage.setItem('aqm_active_sessions', JSON.stringify(newSessions));
+      apiStorage.setItem('aqm_active_sessions', JSON.stringify(newSessions));
       return newSessions;
     });
   };
@@ -63,11 +64,11 @@ export function SecuritySettings() {
 
   const handleSave = () => {
     setIsSaving(true);
-    localStorage.setItem('aqm_security_settings', JSON.stringify(settings));
+    apiStorage.setItem('aqm_security_settings', JSON.stringify(settings));
     
     // Add activity log
     try {
-      const activityRaw = localStorage.getItem('aqm_activity_log');
+      const activityRaw = apiStorage.getItem('aqm_activity_log');
       let activities: any[] = [];
       if (activityRaw) {
         try {
@@ -77,7 +78,7 @@ export function SecuritySettings() {
       }
       
       let currentUser = 'Unknown User';
-      const userRaw = localStorage.getItem('aqm_current_user');
+      const userRaw = apiStorage.getItem('aqm_current_user');
       if (userRaw) {
         try {
           currentUser = JSON.parse(userRaw)?.name || currentUser;
@@ -94,7 +95,7 @@ export function SecuritySettings() {
         ipAddress: '192.168.1.1',
         status: 'Success'
       });
-      localStorage.setItem('aqm_activity_log', JSON.stringify(activities.slice(0, 50)));
+      apiStorage.setItem('aqm_activity_log', JSON.stringify(activities.slice(0, 50)));
     } catch (e) {
       console.error(e);
     }

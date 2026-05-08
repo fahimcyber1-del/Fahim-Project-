@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, KpiRecord } from './types';
 import { INITIAL_KPIS } from './mockData';
@@ -9,7 +10,7 @@ import { Target, List, PlusCircle } from 'lucide-react';
 
 export function KpiModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<KpiRecord[]>(INITIAL_KPIS);
+  const [records, setRecords] = useApiStorage('aqm_kpi_records', INITIAL_KPIS);
 
   const handleSave = (data: KpiRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

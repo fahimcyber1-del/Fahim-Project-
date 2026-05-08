@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { IncomingQCDashboard } from './IncomingQCDashboard';
 import { IncomingQCList } from './IncomingQCList';
@@ -9,7 +10,7 @@ import { LayoutDashboard, List, FileText } from 'lucide-react';
 
 export function IncomingQCModule() {
   const [view, setView] = useState<'dashboard' | 'list' | 'form' | 'detail'>('dashboard');
-  const [records, setRecords] = useState<IncomingQCRecord[]>(mockIncomingQC);
+  const [records, setRecords] = useApiStorage<IncomingQCRecord>('aqm_incomingqc_records', mockIncomingQC);
   const [selectedRecord, setSelectedRecord] = useState<IncomingQCRecord | null>(null);
 
   const handleCreate = (data: IncomingQCRecord) => {

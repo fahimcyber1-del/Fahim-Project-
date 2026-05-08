@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState } from 'react';
 import { GeneralSettings } from './GeneralSettings';
 import { OverviewSettings } from './OverviewSettings';
@@ -10,7 +11,8 @@ import { NotificationSettings } from './NotificationSettings';
 import { AuditTrailSettings } from './AuditTrailSettings';
 import { DatabaseSettings } from './DatabaseSettings';
 import { SystemUpdateSettings } from './SystemUpdateSettings';
-import { LayoutDashboard, SlidersHorizontal, Users, Bell, Shield, Database, Webhook, Palette, Activity, User, History, DownloadCloud } from 'lucide-react';
+import { DeploymentSettings } from './DeploymentSettings';
+import { LayoutDashboard, SlidersHorizontal, Users, Bell, Shield, Database, Webhook, Palette, Activity, User, History, DownloadCloud, Server } from 'lucide-react';
 
 export function SettingModule({ navigationPayload, onNavigationHandled }: { navigationPayload?: any, onNavigationHandled?: () => void }) {
   const [activeTab, setActiveTab] = React.useState('overview');
@@ -27,7 +29,7 @@ export function SettingModule({ navigationPayload, onNavigationHandled }: { navi
   const [userRole, setUserRole] = React.useState<string>('User');
 
   React.useEffect(() => {
-    const stored = localStorage.getItem('userProfile');
+    const stored = apiStorage.getItem('userProfile');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -50,6 +52,7 @@ export function SettingModule({ navigationPayload, onNavigationHandled }: { navi
     { id: 'audit_trail', label: 'Audit Trail', icon: History },
     { id: 'database', label: 'Database Backup', icon: Database },
     { id: 'system_update', label: 'System Update', icon: DownloadCloud },
+    { id: 'deployment', label: 'Deployment & Network', icon: Server },
     { id: 'integrations', label: 'Integrations', icon: Webhook },
   ];
 
@@ -114,7 +117,8 @@ export function SettingModule({ navigationPayload, onNavigationHandled }: { navi
           {activeTab === 'audit_trail' && <AuditTrailSettings />}
           {activeTab === 'database' && <DatabaseSettings />}
           {activeTab === 'system_update' && <SystemUpdateSettings />}
-          {activeTab !== 'overview' && activeTab !== 'profile' && activeTab !== 'general' && activeTab !== 'appearance' && activeTab !== 'system_status' && activeTab !== 'security' && activeTab !== 'users' && activeTab !== 'notifications' && activeTab !== 'audit_trail' && activeTab !== 'database' && activeTab !== 'system_update' && (
+          {activeTab === 'deployment' && <DeploymentSettings />}
+          {activeTab !== 'overview' && activeTab !== 'profile' && activeTab !== 'general' && activeTab !== 'appearance' && activeTab !== 'system_status' && activeTab !== 'security' && activeTab !== 'users' && activeTab !== 'notifications' && activeTab !== 'audit_trail' && activeTab !== 'database' && activeTab !== 'system_update' && activeTab !== 'deployment' && (
             <div className="flex flex-col items-center justify-center p-12 text-slate-500 h-full border-2 border-dashed border-slate-100 rounded-xl m-6">
               <SlidersHorizontal className="w-12 h-12 text-slate-300 mb-4" />
               <p className="font-medium text-slate-900">Module Under Construction</p>

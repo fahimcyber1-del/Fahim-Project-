@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect } from "react";
 import { cn } from "../../lib/utils";
 import { APP_MODULES, MODULE_GROUPS } from "../../config/modules";
@@ -46,14 +47,14 @@ export function Sidebar({ activeModuleId, isExpanded, onToggleExpand, onModuleSe
   const [roles, setRoles] = useState<any[]>([]);
   
   useEffect(() => {
-    const stored = localStorage.getItem('userProfile');
+    const stored = apiStorage.getItem('userProfile');
     if (stored) {
       try {
         setUserProfile(JSON.parse(stored));
       } catch (e) {}
     }
 
-    const storedRoles = localStorage.getItem('aqm_roles');
+    const storedRoles = apiStorage.getItem('aqm_roles');
     if (storedRoles) {
       try {
         setRoles(JSON.parse(storedRoles));

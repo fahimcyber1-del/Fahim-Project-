@@ -2,6 +2,14 @@ export type InspectionCategory = 'Inline' | 'Prefinal' | 'Final';
 
 export type CheckStatus = 'OK' | 'NOT OK' | 'N/A';
 
+export interface InspectionSignature {
+  id: string;
+  name: string;
+  designation: string;
+  date: string;
+  image?: string;
+}
+
 export interface InspectionRecord {
   id: string;
   category: InspectionCategory;
@@ -39,6 +47,13 @@ export interface InspectionRecord {
   status: 'Pass' | 'Recheck' | 'Fail';
   remarks?: string;
   attachments?: { name: string; type: string; data: string }[];
+  
+  // Signatures
+  signature?: string;
+  signatureImage?: string;
+  signatureDesignation?: string;
+  signatureDate?: string;
+  signatures?: InspectionSignature[];
 }
 
 export type ViewState = 

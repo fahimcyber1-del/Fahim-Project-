@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, OrganogramRecord } from './types';
 import { INITIAL_ORGANOGRAMS } from './mockData';
@@ -9,7 +10,7 @@ import { Users, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function OrganogramModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<OrganogramRecord[]>(INITIAL_ORGANOGRAMS);
+  const [records, setRecords] = useApiStorage('aqm_organogram_records', INITIAL_ORGANOGRAMS);
 
   const handleSave = (data: OrganogramRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { DefectItem, ViewState } from './types';
 import { INITIAL_DEFECTS } from './mockData';
@@ -9,7 +10,7 @@ import { DefectSettings } from './DefectSettings';
 import { LayoutDashboard, List, FileText, Settings as SettingsIcon } from 'lucide-react';
 
 export function DefectLibraryModule() {
-  const [records, setRecords] = useState<DefectItem[]>(INITIAL_DEFECTS);
+  const [records, setRecords] = useApiStorage('aqm_defectlibrary_records', INITIAL_DEFECTS);
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
   const [categories, setCategories] = useState<string[]>(['Stitching', 'Fabric', 'Measurement', 'Finishing', 'Knitting', 'Color', 'Others']);
   const [departments, setDepartments] = useState<string[]>(['Sewing', 'Cutting', 'Finishing', 'Knitting', 'Warehousing']);

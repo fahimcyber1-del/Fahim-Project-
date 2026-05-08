@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, Equipment } from './types';
 import { mockEquipment } from './mockData';
@@ -9,7 +10,7 @@ import { LayoutDashboard, List, PlusCircle } from 'lucide-react';
 
 export function CalibrationModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<Equipment[]>(mockEquipment);
+  const [records, setRecords] = useApiStorage<Equipment>('aqm_calibration_equipment', mockEquipment);
 
   const handleSave = (data: Equipment) => {
     setRecords(prev => {

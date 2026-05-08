@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useRef } from 'react';
 import { User, Mail, Shield, Camera, Save, Briefcase, Phone, MapPin, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -9,7 +10,7 @@ export function ProfileSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [profile, setProfile] = useState(() => {
-    const stored = localStorage.getItem('userProfile');
+    const stored = apiStorage.getItem('userProfile');
     let email = 'admin@example.com';
     let role = 'Super Admin';
     if (stored) {
@@ -93,8 +94,8 @@ export function ProfileSettings() {
         return;
       }
       
-      const storedUsersRaw = localStorage.getItem('aqm_users');
-      const currentUserRaw = localStorage.getItem('aqm_current_user');
+      const storedUsersRaw = apiStorage.getItem('aqm_users');
+      const currentUserRaw = apiStorage.getItem('aqm_current_user');
       if (storedUsersRaw && currentUserRaw) {
          try {
            let users = JSON.parse(storedUsersRaw);
@@ -114,22 +115,22 @@ export function ProfileSettings() {
               users[userIndex].username = profile.username;
               users[userIndex].name = profileToStore.name;
               users[userIndex].imageUrl = profileToStore.imageUrl;
-              localStorage.setItem('aqm_users', JSON.stringify(users));
+              apiStorage.setItem('aqm_users', JSON.stringify(users));
            }
            
            currentUser.password = passwordData.newPassword;
            currentUser.username = profile.username;
            currentUser.name = profileToStore.name;
            currentUser.imageUrl = profileToStore.imageUrl;
-           localStorage.setItem('aqm_current_user', JSON.stringify(currentUser));
+           apiStorage.setItem('aqm_current_user', JSON.stringify(currentUser));
            
            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
          } catch(e) { console.error('Invalid JSON in users list or current user', e); }
       }
     } else {
         // Just updating the profile, need to update the username in the users list
-        const storedUsersRaw = localStorage.getItem('aqm_users');
-        const currentUserRaw = localStorage.getItem('aqm_current_user');
+        const storedUsersRaw = apiStorage.getItem('aqm_users');
+        const currentUserRaw = apiStorage.getItem('aqm_current_user');
         if (storedUsersRaw && currentUserRaw) {
             try {
               let users = JSON.parse(storedUsersRaw);
@@ -141,19 +142,19 @@ export function ProfileSettings() {
                   users[userIndex].username = profile.username;
                   users[userIndex].name = profileToStore.name;
                   users[userIndex].imageUrl = profileToStore.imageUrl;
-                  localStorage.setItem('aqm_users', JSON.stringify(users));
+                  apiStorage.setItem('aqm_users', JSON.stringify(users));
               }
               
               currentUser.username = profile.username;
               currentUser.name = profileToStore.name;
               currentUser.imageUrl = profileToStore.imageUrl;
-              localStorage.setItem('aqm_current_user', JSON.stringify(currentUser));
+              apiStorage.setItem('aqm_current_user', JSON.stringify(currentUser));
             } catch(e) {}
         }
     }
     
     // Save to local storage
-    localStorage.setItem('userProfile', JSON.stringify(profileToStore));
+    apiStorage.setItem('userProfile', JSON.stringify(profileToStore));
     
     // Dispatch custom event to notify other components (like Header)
     window.dispatchEvent(new CustomEvent('profile-updated', { detail: profileToStore }));

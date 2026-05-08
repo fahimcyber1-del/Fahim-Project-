@@ -16,6 +16,7 @@ export interface QualityTrend {
   month: string;
   defectRate: number;
   reworkRate: number;
+  rftRate: number;
   targetRate: number;
 }
 

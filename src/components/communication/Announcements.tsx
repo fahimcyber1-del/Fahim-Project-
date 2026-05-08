@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Calendar as CalendarIcon, Clock, AlertCircle, Plus, Send, X, Users, User, ArrowLeft } from 'lucide-react';
 
@@ -19,16 +20,16 @@ export function Announcements() {
 
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem('userProfile') || localStorage.getItem('aqm_current_user');
+      const storedUser = apiStorage.getItem('userProfile') || apiStorage.getItem('aqm_current_user');
       if (storedUser) setCurrentUser(JSON.parse(storedUser));
       
-      const storedUsers = localStorage.getItem('aqm_users');
+      const storedUsers = apiStorage.getItem('aqm_users');
       if (storedUsers) setUsers(JSON.parse(storedUsers));
 
-      const storedRoles = localStorage.getItem('aqm_roles');
+      const storedRoles = apiStorage.getItem('aqm_roles');
       if (storedRoles) setRoles(JSON.parse(storedRoles));
 
-      const storedAnnouncements = localStorage.getItem('aqm_announcements');
+      const storedAnnouncements = apiStorage.getItem('aqm_announcements');
       if (storedAnnouncements) {
         setAnnouncements(JSON.parse(storedAnnouncements));
       } else {
@@ -46,7 +47,7 @@ export function Announcements() {
           }
         ];
         setAnnouncements(MOCK);
-        localStorage.setItem('aqm_announcements', JSON.stringify(MOCK));
+        apiStorage.setItem('aqm_announcements', JSON.stringify(MOCK));
       }
     } catch (e) {
       console.error(e);
@@ -71,7 +72,7 @@ export function Announcements() {
 
     const newAnns = [newAnnouncement, ...announcements];
     setAnnouncements(newAnns);
-    localStorage.setItem('aqm_announcements', JSON.stringify(newAnns));
+    apiStorage.setItem('aqm_announcements', JSON.stringify(newAnns));
     
     // Also simulate sending a direct message if targeted
     if (formData.targetType === 'user' && formData.targetId) {
@@ -91,7 +92,7 @@ export function Announcements() {
   const sendDirectMessage = (targetEmail: string, text: string) => {
     if (!currentUser || targetEmail === currentUser.email) return;
     try {
-      const rawConvos = localStorage.getItem('aqm_conversations');
+      const rawConvos = apiStorage.getItem('aqm_conversations');
       const allConvos = rawConvos ? JSON.parse(rawConvos) : [];
       let convo = allConvos.find((c: any) => !c.isGroup && c.participants.includes(currentUser.email) && c.participants.includes(targetEmail));
       
@@ -108,9 +109,9 @@ export function Announcements() {
       }
       convo.lastMessage = 'Announcement Sent';
       convo.lastMessageTime = new Date().toISOString();
-      localStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
+      apiStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
 
-      const rawMsgs = localStorage.getItem('aqm_messages');
+      const rawMsgs = apiStorage.getItem('aqm_messages');
       const allMsgs = rawMsgs ? JSON.parse(rawMsgs) : [];
       allMsgs.push({
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -120,7 +121,7 @@ export function Announcements() {
         text: text,
         time: new Date().toISOString()
       });
-      localStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
+      apiStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
     } catch (e) {
       console.error(e);
     }
@@ -130,7 +131,7 @@ export function Announcements() {
     if (window.confirm('Delete this announcement?')) {
       const filtered = announcements.filter(a => a.id !== id);
       setAnnouncements(filtered);
-      localStorage.setItem('aqm_announcements', JSON.stringify(filtered));
+      apiStorage.setItem('aqm_announcements', JSON.stringify(filtered));
     }
   };
 

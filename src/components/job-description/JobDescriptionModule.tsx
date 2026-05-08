@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, JobDescriptionRecord } from './types';
 import { INITIAL_JDS } from './mockData';
@@ -9,7 +10,7 @@ import { Briefcase, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function JobDescriptionModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<JobDescriptionRecord[]>(INITIAL_JDS);
+  const [records, setRecords] = useApiStorage('aqm_jobdescription_records', INITIAL_JDS);
 
   const handleSave = (data: JobDescriptionRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

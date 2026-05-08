@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
 import { InspectionRecord } from './types';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { calculateAQL } from './aqlCalculator';
 import { INITIAL_ORDERS } from '../orders-buyers/mockData';
@@ -47,7 +48,54 @@ export function InspectionForm({ initialData, onSave, onCancel }: FormProps) {
     bomCheck: 'OK',
     inspector: '',
     remarks: '',
+    signatures: []
   });
+
+  const sigPadRef = useRef<SignatureCanvas>(null);
+  const [sigInputName, setSigInputName] = useState('');
+  const [sigInputDesignation, setSigInputDesignation] = useState('');
+  const [sigInputDate, setSigInputDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+  const handleClearSignature = () => {
+    if (sigPadRef.current) {
+      sigPadRef.current.clear();
+    }
+  };
+
+  const handleAddSignature = () => {
+    if (!sigPadRef.current) return;
+    const imgUrl = sigPadRef.current.isEmpty() ? '' : sigPadRef.current.toDataURL();
+    
+    if (!sigInputName.trim() && !imgUrl) {
+      alert("Please draw a signature or provide a name.");
+      return;
+    }
+
+    const newSig = {
+      id: `sig-${Date.now()}`,
+      name: sigInputName,
+      designation: sigInputDesignation,
+      date: sigInputDate,
+      image: imgUrl
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      signatures: [...(prev.signatures || []), newSig]
+    }));
+
+    setSigInputName('');
+    setSigInputDesignation('');
+    setSigInputDate(format(new Date(), 'yyyy-MM-dd'));
+    sigPadRef.current.clear();
+  };
+
+  const handleRemoveSignature = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      signatures: (prev.signatures || []).filter(s => s.id !== id)
+    }));
+  };
 
   const [aqlLimits, setAqlLimits] = useState({ sampleSize: 0, ac: 0, re: 0 });
   const [breakdowns, setBreakdowns] = useState<SizeColorBreakdown[]>([]);
@@ -554,6 +602,102 @@ export function InspectionForm({ initialData, onSave, onCancel }: FormProps) {
                   )}
                 </div>
 
+                {/* E-Signatures Section */}
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <div className="flex items-center justify-between mb-4 pb-2">
+                    <h3 className="text-lg font-bold text-slate-800">E-Signatures / Approvals</h3>
+                  </div>
+                  
+                  {(formData.signatures && formData.signatures.length > 0) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      {formData.signatures.map((sig) => (
+                        <div key={sig.id} className="border border-slate-200 rounded-lg p-4 bg-white shadow-sm flex items-start gap-4">
+                          <div className="flex-1 space-y-1">
+                            <p className="font-bold text-slate-800">{sig.name || 'Unnamed'}</p>
+                            <p className="text-sm font-medium text-slate-500">{sig.designation || 'No Designation'}</p>
+                            <p className="text-xs text-slate-400">Signed on: {sig.date}</p>
+                            {sig.image && (
+                              <div className="mt-2 border border-slate-100 rounded bg-slate-50 inline-block p-1">
+                                <img src={sig.image} alt="Signature" className="h-12 object-contain mix-blend-multiply" />
+                              </div>
+                            )}
+                          </div>
+                          <button type="button" onClick={() => handleRemoveSignature(sig.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded" title="Remove signature">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 border border-slate-200 rounded-lg">
+                    <div className="md:col-span-2 space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Draw Signature</label>
+                        <div className="border border-slate-300 bg-white rounded-lg overflow-hidden flex items-center justify-center relative touch-none" style={{ height: '200px' }}>
+                          <SignatureCanvas 
+                            ref={sigPadRef} 
+                            canvasProps={{className: 'w-full h-full cursor-crosshair'}} 
+                            backgroundColor="white"
+                          />
+                          <button type="button" onClick={handleClearSignature} className="absolute top-2 right-2 p-1.5 bg-rose-100 text-rose-600 rounded opacity-70 hover:opacity-100 transition-opacity" title="Clear signature">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-2">E-Signature Name</label>
+                      <input 
+                        type="text" 
+                        value={sigInputName} 
+                        onChange={(e) => setSigInputName(e.target.value)}
+                        placeholder="Type full name"
+                        className="w-full px-4 py-2 border border-slate-300 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-serif italic" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Designation</label>
+                      <select
+                        value={sigInputDesignation}
+                        onChange={(e) => setSigInputDesignation(e.target.value)}
+                        className="w-full px-4 py-2 border border-slate-300 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="">Select Designation...</option>
+                        {(() => {
+                          try {
+                            const saved = localStorage.getItem('audit_designations');
+                            if (saved) {
+                              const list = JSON.parse(saved);
+                              return list.map((item: string, i: number) => <option key={i} value={item}>{item}</option>);
+                            }
+                          } catch (e) {}
+                          return (
+                            <>
+                              <option value="Quality Inspector">Quality Inspector</option>
+                              <option value="Quality Manager">Quality Manager</option>
+                              <option value="Production Manager">Production Manager</option>
+                            </>
+                          );
+                        })()}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Signature Date</label>
+                      <input 
+                        type="date" 
+                        value={sigInputDate} 
+                        onChange={(e) => setSigInputDate(e.target.value)}
+                        className="w-full px-4 py-2 border border-slate-300 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                      />
+                    </div>
+                    <div className="md:col-span-2 mt-2">
+                      <button type="button" onClick={handleAddSignature} className="px-4 py-2 bg-slate-800 text-white rounded text-sm font-bold shadow-sm hover:bg-slate-700 flex items-center justify-center gap-2">
+                        <Plus className="w-4 h-4" /> Add Signature
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
               </div>
               </div>

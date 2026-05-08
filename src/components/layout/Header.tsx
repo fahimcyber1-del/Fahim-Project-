@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, Menu, User, Settings, LogOut, FileText, CheckCircle2, Inbox } from "lucide-react";
 import { useAppearance } from "../setting/AppearanceContext";
@@ -35,7 +36,7 @@ export function Header({ title, onMenuToggle }: HeaderProps) {
       .then(data => setUserIp(data.ip))
       .catch(() => setUserIp("Unknown IP"));
 
-    const stored = localStorage.getItem('userProfile');
+    const stored = apiStorage.getItem('userProfile');
     if (stored) {
       try {
         setUserProfile(JSON.parse(stored));

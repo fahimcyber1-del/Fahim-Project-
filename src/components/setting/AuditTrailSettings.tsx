@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect, useMemo } from 'react';
 import { History, Search, Filter, ArrowLeft, ArrowRight, FileText, UserPlus, Trash2, Edit, RefreshCw } from 'lucide-react';
 
@@ -34,7 +35,7 @@ export function AuditTrailSettings() {
 
   useEffect(() => {
     try {
-      const storedLogs = localStorage.getItem('aqm_activity_log');
+      const storedLogs = apiStorage.getItem('aqm_activity_log');
       if (storedLogs) {
         const parsed = JSON.parse(storedLogs);
         
@@ -58,7 +59,7 @@ export function AuditTrailSettings() {
         setLogs(formattedLogs.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
       } else {
         setLogs(MOCK_AUDIT_LOGS);
-        localStorage.setItem('aqm_activity_log', JSON.stringify(MOCK_AUDIT_LOGS));
+        apiStorage.setItem('aqm_activity_log', JSON.stringify(MOCK_AUDIT_LOGS));
       }
     } catch (error) {
       setLogs(MOCK_AUDIT_LOGS);

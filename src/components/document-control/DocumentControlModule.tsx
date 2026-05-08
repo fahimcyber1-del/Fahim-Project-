@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, DocumentRecord } from './types';
 import { INITIAL_DOCUMENTS } from './mockData';
@@ -9,7 +10,7 @@ import { Files, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function DocumentControlModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<DocumentRecord[]>(INITIAL_DOCUMENTS);
+  const [records, setRecords] = useApiStorage('aqm_documentcontrol_records', INITIAL_DOCUMENTS);
 
   const handleSave = (data: DocumentRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { QualityRecord } from './types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, ComposedChart, Line, LineChart } from 'recharts';
-import { CheckCircle2, AlertTriangle, XCircle, Activity, Filter, Calendar } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Activity, Filter, Calendar, BadgeCheck } from 'lucide-react';
 
 interface DashboardProps {
   records: QualityRecord[];
@@ -52,6 +52,7 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
 
   const passRate = totalInspected ? ((totalPassed / totalInspected) * 100).toFixed(1) : '0';
   const defectRate = totalInspected ? ((totalDefected / totalInspected) * 100).toFixed(1) : '0';
+  const rftRate = totalInspected ? ((totalPassed / totalInspected) * 100).toFixed(1) : '0';
 
   // Group by line for bar chart
   const lineStats = filteredRecords.reduce((acc, curr) => {
@@ -112,6 +113,8 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
     const dayInspected = dayRecords.reduce((sum, r) => sum + r.inspectedQuantity, 0);
     const dayDefects = dayRecords.reduce((sum, r) => sum + r.defectedQuantity, 0);
     const rate = dayInspected ? parseFloat(((dayDefects / dayInspected) * 100).toFixed(1)) : 0;
+    const dayPassed = dayRecords.reduce((sum, r) => sum + r.passedQuantity, 0);
+    const rft = dayInspected ? parseFloat(((dayPassed / dayInspected) * 100).toFixed(1)) : 0;
     
     // Format date string for better display (e.g. "May 01" from "2026-05-01")
     let displayDate = date;
@@ -124,6 +127,7 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
       date: displayDate,
       fullDate: date,
       defectRate: rate,
+      rftRate: rft,
       inspected: dayInspected,
       defects: dayDefects
     };
@@ -169,7 +173,7 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:p-6">
         <div className="shadow-sm border border-slate-200 bg-white rounded-lg p-5">
             <div className="flex justify-between items-center pb-2">
               <p className="text-[10px] uppercase font-bold text-slate-500">Total Inspected</p>
@@ -178,15 +182,25 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
             <p className="text-3xl font-black text-slate-900">{totalInspected.toLocaleString()}</p>
             <p className="mt-1 text-xs text-slate-500 font-medium">Pieces</p>
         </div>
+        <div className="shadow-sm border border-slate-200 bg-white rounded-lg p-5 bg-emerald-50/30 border-emerald-100">
+            <div className="flex justify-between items-center pb-2">
+              <p className="text-[10px] uppercase font-bold text-emerald-700 cursor-help" title="Right First Time Percentage">RFT Percentage</p>
+              <BadgeCheck className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div className="cursor-help inline-block" title="Passed Quantity / Total Inspected Quantity">
+                <p className="text-3xl font-black text-emerald-600">{rftRate}%</p>
+            </div>
+            <p className="mt-1 text-xs text-emerald-600 font-medium">{totalPassed.toLocaleString()} passed</p>
+        </div>
         <div className="shadow-sm border border-slate-200 bg-white rounded-lg p-5">
             <div className="flex justify-between items-center pb-2">
               <p className="text-[10px] uppercase font-bold text-slate-500 cursor-help" title="Passed Quantity / Total Inspected Quantity">Pass Rate</p>
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="h-4 w-4 text-blue-600" />
             </div>
             <div className="cursor-help inline-block" title="Passed Quantity / Total Inspected Quantity">
                 <p className="text-3xl font-black text-slate-900">{passRate}%</p>
             </div>
-            <p className="mt-1 text-xs text-emerald-600 font-medium">{totalPassed.toLocaleString()} passed</p>
+            <p className="mt-1 text-xs text-slate-500 font-medium">{totalPassed.toLocaleString()} pass</p>
         </div>
         <div className="shadow-sm border border-slate-200 bg-white rounded-lg p-5">
             <div className="flex justify-between items-center pb-2">
@@ -237,7 +251,7 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:p-6">
         <div className="shadow-sm border border-slate-200 bg-white rounded-lg">
-          <div className="border-b border-slate-100 p-4 font-bold text-sm">Defect Rate Trend</div>
+          <div className="border-b border-slate-100 p-4 font-bold text-sm">RFT & Defect Rate Trend</div>
           <div className="p-4">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -249,6 +263,7 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
                     contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     formatter={(value: number, name: string) => {
                       if (name === 'defectRate') return [`${value}%`, 'Defect Rate'];
+                      if (name === 'rftRate') return [`${value}%`, 'RFT Rate'];
                       return [value, name];
                     }}
                     labelFormatter={(label, payload) => {
@@ -258,7 +273,9 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
                       return label;
                     }}
                   />
-                  <Line type="monotone" dataKey="defectRate" name="defectRate" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: '#f59e0b', strokeWidth: 2, stroke: '#ffffff' }} activeDot={{ r: 6 }} />
+                  <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 500, color: '#64748b' }} verticalAlign="top" height={36} />
+                  <Line type="monotone" dataKey="rftRate" name="RFT Rate" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#ffffff' }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="defectRate" name="Defect Rate" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: '#f59e0b', strokeWidth: 2, stroke: '#ffffff' }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

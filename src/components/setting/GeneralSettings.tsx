@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, Upload, Building2, Globe2, Mail, Phone, MapPin, Monitor, CheckCircle2 } from 'lucide-react';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -27,7 +28,7 @@ export function GeneralSettings() {
 
   useEffect(() => {
     // Load from localStorage on mount
-    const savedData = localStorage.getItem('aqm_general_settings');
+    const savedData = apiStorage.getItem('aqm_general_settings');
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
@@ -37,7 +38,7 @@ export function GeneralSettings() {
       }
     }
     
-    const savedLogo = localStorage.getItem('aqm_company_logo');
+    const savedLogo = apiStorage.getItem('aqm_company_logo');
     if (savedLogo) {
       setLogoBase64(savedLogo);
     }
@@ -49,11 +50,11 @@ export function GeneralSettings() {
     
     // Save to localStorage
     setTimeout(() => {
-      localStorage.setItem('aqm_general_settings', JSON.stringify(formData));
+      apiStorage.setItem('aqm_general_settings', JSON.stringify(formData));
       if (logoBase64) {
-        localStorage.setItem('aqm_company_logo', logoBase64);
+        apiStorage.setItem('aqm_company_logo', logoBase64);
       } else {
-        localStorage.removeItem('aqm_company_logo');
+        apiStorage.removeItem('aqm_company_logo');
       }
       setIsSaving(false);
       setSaveSuccess(true);
@@ -64,7 +65,7 @@ export function GeneralSettings() {
       
       // Log activity
       try {
-        const activityRaw = localStorage.getItem('aqm_activity_log');
+        const activityRaw = apiStorage.getItem('aqm_activity_log');
         let activities: any[] = [];
         if (activityRaw) {
           try {
@@ -73,7 +74,7 @@ export function GeneralSettings() {
           } catch(e) {}
         }
         let currentUser = 'Unknown User';
-        const userRaw = localStorage.getItem('aqm_current_user');
+        const userRaw = apiStorage.getItem('aqm_current_user');
         if (userRaw) {
           try {
             currentUser = JSON.parse(userRaw)?.name || currentUser;
@@ -90,7 +91,7 @@ export function GeneralSettings() {
           ipAddress: '192.168.1.1',
           status: 'Success'
         });
-        localStorage.setItem('aqm_activity_log', JSON.stringify(activities.slice(0, 50)));
+        apiStorage.setItem('aqm_activity_log', JSON.stringify(activities.slice(0, 50)));
       } catch (e) {
         console.error(e);
       }

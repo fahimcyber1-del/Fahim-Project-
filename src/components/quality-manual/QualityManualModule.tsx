@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, QualityManualRecord } from './types';
 import { INITIAL_MANUALS } from './mockData';
@@ -9,7 +10,7 @@ import { Book, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function QualityManualModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<QualityManualRecord[]>(INITIAL_MANUALS);
+  const [records, setRecords] = useApiStorage('aqm_qualitymanual_records', INITIAL_MANUALS);
 
   const handleSave = (data: QualityManualRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

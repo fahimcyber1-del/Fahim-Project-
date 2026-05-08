@@ -3,6 +3,14 @@ export interface DefectType {
   count: number;
 }
 
+export interface QualitySignature {
+  id: string;
+  name: string;
+  designation: string;
+  date: string;
+  image?: string;
+}
+
 export interface QualityRecord {
   id: string;
   date: string;
@@ -23,6 +31,13 @@ export interface QualityRecord {
   inspector: string;
   remarks: string;
   topDefects: DefectType[];
+  // Legacy signature
+  signature?: string;
+  signatureImage?: string;
+  signatureDesignation?: string;
+  signatureDate?: string;
+  // Multiple signatures
+  signatures?: QualitySignature[];
 }
 
 export type ViewState = 

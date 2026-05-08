@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, TrainingRecord } from './types';
 import { INITIAL_TRAININGS } from './mockData';
@@ -10,7 +11,7 @@ import { BookOpen, List, PlusCircle, LayoutDashboard, Calendar as CalendarIcon }
 
 export function TrainingModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<TrainingRecord[]>(INITIAL_TRAININGS);
+  const [records, setRecords] = useApiStorage('aqm_training_records', INITIAL_TRAININGS);
 
   const handleSave = (data: TrainingRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

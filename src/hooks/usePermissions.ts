@@ -1,3 +1,4 @@
+import { apiStorage } from '../utils/apiStorage';
 import { useState, useEffect } from 'react';
 import { APP_MODULES } from '../config/modules';
 
@@ -11,8 +12,8 @@ export function usePermissions(moduleLabel: string) {
 
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem('userProfile');
-      const storedRoles = localStorage.getItem('aqm_roles');
+      const storedUser = apiStorage.getItem('userProfile');
+      const storedRoles = apiStorage.getItem('aqm_roles');
       
       if (storedUser && storedRoles) {
         const user = JSON.parse(storedUser);

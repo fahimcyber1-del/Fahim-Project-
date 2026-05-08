@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { InspectionRecord, ViewState } from './types';
 import { INITIAL_RECORDS } from './mockData';
@@ -8,7 +9,7 @@ import { InspectionDetail } from './InspectionDetail';
 import { LayoutDashboard, List, FileText } from 'lucide-react';
 
 export function InspectionModule() {
-  const [records, setRecords] = useState<InspectionRecord[]>(INITIAL_RECORDS);
+  const [records, setRecords] = useApiStorage('aqm_inspection_records', INITIAL_RECORDS);
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
 
   const handleCreate = () => {

@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, SOPRecord } from './types';
 import { INITIAL_SOPS } from './mockData';
@@ -9,7 +10,7 @@ import { FileText, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function SopManagementModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<SOPRecord[]>(INITIAL_SOPS);
+  const [records, setRecords] = useApiStorage('aqm_sopmanagement_records', INITIAL_SOPS);
 
   const handleSave = (data: SOPRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

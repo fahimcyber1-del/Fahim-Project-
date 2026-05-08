@@ -1,18 +1,24 @@
 import React from 'react';
-import { PRODUCTION_TRENDS, SUPPLIER_PERFORMANCE } from './mockData';
+import { PRODUCTION_TRENDS, SUPPLIER_PERFORMANCE, QUALITY_TRENDS } from './mockData';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { exportToCsv } from './ExportUtils';
-import { Download, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, CheckCircle, BadgeCheck } from 'lucide-react';
+import { useApiData } from '../../hooks/useApiData';
 
 export function ProductionReport() {
-  const avgEfficiency = PRODUCTION_TRENDS.reduce((acc, curr) => acc + curr.efficiency, 0) / PRODUCTION_TRENDS.length;
-  const maxActual = Math.max(...PRODUCTION_TRENDS.map(t => t.actual));
+  const productionTrends = useApiData('production_trends', PRODUCTION_TRENDS);
+  const supplierPerformance = useApiData('supplier_performance', SUPPLIER_PERFORMANCE);
+  const qualityTrends = useApiData('quality_trends', QUALITY_TRENDS);
+
+  const avgEfficiency = productionTrends.length > 0 ? productionTrends.reduce((acc, curr) => acc + curr.efficiency, 0) / productionTrends.length : 0;
+  const avgRFT = qualityTrends.length > 0 ? qualityTrends.reduce((acc, curr) => acc + curr.rftRate, 0) / qualityTrends.length : 0;
+  const maxActual = productionTrends.length > 0 ? Math.max(...productionTrends.map(t => t.actual)) : 0;
 
   return (
     <div className="space-y-6">
       
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
            <div className="flex items-center gap-3 mb-2 text-indigo-600">
              <TrendingUp className="w-5 h-5" />
@@ -20,6 +26,14 @@ export function ProductionReport() {
            </div>
            <p className="text-3xl font-black text-slate-900">{avgEfficiency.toFixed(1)}%</p>
            <p className="text-xs text-slate-500 mt-2 font-medium">Over last 7 days</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
+           <div className="flex items-center gap-3 mb-2 text-emerald-600">
+             <BadgeCheck className="w-5 h-5" />
+             <h4 className="text-sm font-bold text-slate-700">Average RFT</h4>
+           </div>
+           <p className="text-3xl font-black text-slate-900">{avgRFT.toFixed(1)}%</p>
+           <p className="text-xs text-slate-500 mt-2 font-medium">Right First Time</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
            <div className="flex items-center gap-3 mb-2 text-emerald-600">
@@ -34,7 +48,9 @@ export function ProductionReport() {
              <AlertCircle className="w-5 h-5" />
              <h4 className="text-sm font-bold text-slate-700">Target Attainment</h4>
            </div>
-           <p className="text-3xl font-black text-slate-900">92%</p>
+           <p className="text-3xl font-black text-slate-900">
+             92%
+           </p>
            <p className="text-xs text-slate-500 mt-2 font-medium">Days meeting plan</p>
         </div>
       </div>
@@ -43,13 +59,13 @@ export function ProductionReport() {
         <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
           <div className="flex justify-between items-center mb-6">
              <h3 className="text-lg font-bold text-slate-800">Production Efficiency & Target</h3>
-             <button onClick={() => exportToCsv('production-efficiency', PRODUCTION_TRENDS)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+             <button onClick={() => exportToCsv('production-efficiency', productionTrends)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
                <Download className="w-4 h-4" /> Export
              </button>
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={PRODUCTION_TRENDS} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <ComposedChart data={productionTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                 <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
@@ -70,13 +86,13 @@ export function ProductionReport() {
         <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
            <div className="flex justify-between items-center mb-6">
              <h3 className="text-lg font-bold text-slate-800">Supplier Performance Index</h3>
-             <button onClick={() => exportToCsv('supplier-performance', SUPPLIER_PERFORMANCE)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+             <button onClick={() => exportToCsv('supplier-performance', supplierPerformance)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
                <Download className="w-4 h-4" /> Export
              </button>
           </div>
           <div className="h-[350px] w-full">
              <ResponsiveContainer width="100%" height="100%">
-               <RadarChart cx="50%" cy="50%" outerRadius="70%" data={SUPPLIER_PERFORMANCE}>
+               <RadarChart cx="50%" cy="50%" outerRadius="70%" data={supplierPerformance}>
                  <PolarGrid stroke="#e2e8f0" />
                  <PolarAngleAxis dataKey="supplier" tick={{ fontSize: 10, fill: '#475569', fontWeight: 600 }} />
                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />

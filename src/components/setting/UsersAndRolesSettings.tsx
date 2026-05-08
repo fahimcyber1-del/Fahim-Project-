@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect } from 'react';
 import { Users, Shield, UserPlus, ShieldPlus, Search, Edit, Trash2, Check, X, ShieldAlert, Lock, ChevronDown, ChevronRight } from 'lucide-react';
 import { APP_MODULES, MODULE_GROUPS } from '../../config/modules';
@@ -29,7 +30,7 @@ export function UsersAndRolesSettings() {
   
   useEffect(() => {
     const loadUsers = () => {
-      const storedUsers = localStorage.getItem('aqm_users');
+      const storedUsers = apiStorage.getItem('aqm_users');
       if (storedUsers) {
         try {
           setUsers(JSON.parse(storedUsers));
@@ -38,10 +39,10 @@ export function UsersAndRolesSettings() {
         }
       } else {
         setUsers(MOCK_USERS);
-        localStorage.setItem('aqm_users', JSON.stringify(MOCK_USERS));
+        apiStorage.setItem('aqm_users', JSON.stringify(MOCK_USERS));
       }
 
-      const storedRoles = localStorage.getItem('aqm_roles');
+      const storedRoles = apiStorage.getItem('aqm_roles');
       if (storedRoles) {
         try {
           setRoles(JSON.parse(storedRoles));
@@ -50,7 +51,7 @@ export function UsersAndRolesSettings() {
         }
       } else {
         setRoles(MOCK_ROLES);
-        localStorage.setItem('aqm_roles', JSON.stringify(MOCK_ROLES));
+        apiStorage.setItem('aqm_roles', JSON.stringify(MOCK_ROLES));
       }
     };
     
@@ -65,12 +66,12 @@ export function UsersAndRolesSettings() {
 
   const handleSaveUsers = (newUsers: any[]) => {
     setUsers(newUsers);
-    localStorage.setItem('aqm_users', JSON.stringify(newUsers));
+    apiStorage.setItem('aqm_users', JSON.stringify(newUsers));
   };
   
   const handleSaveRoles = (newRoles: any[]) => {
     setRoles(newRoles);
-    localStorage.setItem('aqm_roles', JSON.stringify(newRoles));
+    apiStorage.setItem('aqm_roles', JSON.stringify(newRoles));
   };
 
   // Modals state

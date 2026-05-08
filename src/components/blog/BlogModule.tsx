@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { Newspaper, Search, Plus, Bookmark, Clock, User, ArrowRight, TrendingUp } from 'lucide-react';
 import { PostReader } from './PostReader';
@@ -11,7 +12,7 @@ const INITIAL_MOCK_POSTS = [
 ];
 
 export function BlogModule() {
-  const [posts, setPosts] = useState(INITIAL_MOCK_POSTS);
+  const [posts, setPosts] = useApiStorage('aqm_blog_posts', INITIAL_MOCK_POSTS);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [view, setView] = useState<'list' | 'read' | 'write'>('list');

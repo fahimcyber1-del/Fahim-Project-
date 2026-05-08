@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, MeetingRecord } from './types';
 import { INITIAL_MEETINGS } from './mockData';
@@ -9,7 +10,7 @@ import { MeetingCalendar } from './MeetingCalendar';
 import { LayoutDashboard, List, Calendar as CalendarIcon, PlusCircle } from 'lucide-react';
 
 export function MeetingMinutesModule() {
-  const [records, setRecords] = useState<MeetingRecord[]>(INITIAL_MEETINGS);
+  const [records, setRecords] = useApiStorage('aqm_meetingminutes_records', INITIAL_MEETINGS);
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
 
   const handleSave = (record: MeetingRecord) => {

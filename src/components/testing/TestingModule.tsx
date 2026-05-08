@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, TestRequest } from './types';
 import { INITIAL_TESTS } from './mockData';
@@ -9,7 +10,7 @@ import { LayoutDashboard, List, FileText } from 'lucide-react';
 
 export function TestingModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<TestRequest[]>(INITIAL_TESTS);
+  const [records, setRecords] = useApiStorage('aqm_testing_records', INITIAL_TESTS);
 
   const handleCreate = (test: Partial<TestRequest>) => {
     const newTest: TestRequest = {

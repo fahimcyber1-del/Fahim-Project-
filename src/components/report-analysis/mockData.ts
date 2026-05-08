@@ -19,12 +19,12 @@ export const PRODUCTION_TRENDS: ProductionTrend[] = [
 ];
 
 export const QUALITY_TRENDS: QualityTrend[] = [
-  { month: 'Jan', defectRate: 3.2, reworkRate: 1.5, targetRate: 2.0 },
-  { month: 'Feb', defectRate: 2.8, reworkRate: 1.2, targetRate: 2.0 },
-  { month: 'Mar', defectRate: 3.5, reworkRate: 1.8, targetRate: 2.0 },
-  { month: 'Apr', defectRate: 2.1, reworkRate: 0.9, targetRate: 2.0 },
-  { month: 'May', defectRate: 1.8, reworkRate: 0.7, targetRate: 2.0 },
-  { month: 'Jun', defectRate: 1.5, reworkRate: 0.5, targetRate: 2.0 },
+  { month: 'Jan', defectRate: 3.2, reworkRate: 1.5, rftRate: 95.3, targetRate: 2.0 },
+  { month: 'Feb', defectRate: 2.8, reworkRate: 1.2, rftRate: 96.0, targetRate: 2.0 },
+  { month: 'Mar', defectRate: 3.5, reworkRate: 1.8, rftRate: 94.7, targetRate: 2.0 },
+  { month: 'Apr', defectRate: 2.1, reworkRate: 0.9, rftRate: 97.0, targetRate: 2.0 },
+  { month: 'May', defectRate: 1.8, reworkRate: 0.7, rftRate: 97.5, targetRate: 2.0 },
+  { month: 'Jun', defectRate: 1.5, reworkRate: 0.5, rftRate: 98.0, targetRate: 2.0 },
 ];
 
 export const TRAINING_STATS: TrainingStats[] = [

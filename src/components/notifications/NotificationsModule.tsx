@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { Bell, Check, Settings, Eye, Trash2, AlertTriangle, Workflow, Inbox } from 'lucide-react';
 
@@ -20,7 +21,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 ];
 
 export function NotificationsModule() {
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useApiStorage('aqm_notifications_notifications', INITIAL_NOTIFICATIONS);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   const handleMarkAsRead = (id: string) => {

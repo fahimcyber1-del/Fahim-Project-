@@ -3,20 +3,26 @@ import { QUALITY_TRENDS, DEFECTS_DATA, MONTHLY_DEFECT_RATES } from './mockData';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { exportToCsv } from './ExportUtils';
 import { Download } from 'lucide-react';
+import { useApiData } from '../../hooks/useApiData';
 
 export function QualityReport() {
   const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e'];
 
+  const qualityTrends = useApiData('quality_trends', QUALITY_TRENDS);
+  const defectsData = useApiData('defects', DEFECTS_DATA);
+  const monthlyDefectRates = useApiData('monthly_defect_rates', MONTHLY_DEFECT_RATES);
+
   // Calculate pareto cumulative percentage
   let cumulative = 0;
-  const totalDefects = DEFECTS_DATA.reduce((sum, item) => sum + item.count, 0);
-  const paretoData = [...DEFECTS_DATA].sort((a, b) => b.count - a.count).map(item => {
+  const totalDefects = defectsData.reduce((sum, item) => sum + item.count, 0);
+  const paretoData = [...defectsData].sort((a, b) => b.count - a.count).map(item => {
     cumulative += item.count;
     return {
       ...item,
-      cumulativePercent: Number(((cumulative / totalDefects) * 100).toFixed(1))
+      cumulativePercent: totalDefects > 0 ? Number(((cumulative / totalDefects) * 100).toFixed(1)) : 0
     };
   });
+
 
 
   return (
@@ -59,13 +65,13 @@ export function QualityReport() {
       <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
         <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-slate-800">Defect & Rework Trend</h3>
-            <button onClick={() => exportToCsv('quality-trends-detailed', QUALITY_TRENDS)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+            <button onClick={() => exportToCsv('quality-trends-detailed', qualityTrends)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
               <Download className="w-4 h-4" /> Export CSV
             </button>
         </div>
         <div className="h-[350px] w-full">
            <ResponsiveContainer width="100%" height="100%">
-             <LineChart data={QUALITY_TRENDS} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+             <LineChart data={qualityTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={val => `${val}%`} />
@@ -76,6 +82,7 @@ export function QualityReport() {
                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
                <Line type="monotone" dataKey="defectRate" name="Defect Rate %" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                <Line type="monotone" dataKey="reworkRate" name="Rework Rate %" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+               <Line type="monotone" dataKey="rftRate" name="RFT Rate %" stroke="#10b981" strokeWidth={4} dot={{ r: 5 }} activeDot={{ r: 7 }} />
              </LineChart>
            </ResponsiveContainer>
         </div>
@@ -83,7 +90,7 @@ export function QualityReport() {
       <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
         <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-slate-800">Monthly Defect Rates by Garment Type & Line</h3>
-            <button onClick={() => exportToCsv('monthly-defect-rates', MONTHLY_DEFECT_RATES)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+            <button onClick={() => exportToCsv('monthly-defect-rates', monthlyDefectRates)} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
               <Download className="w-4 h-4" /> Export CSV
             </button>
         </div>
@@ -99,7 +106,7 @@ export function QualityReport() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {MONTHLY_DEFECT_RATES.map((item, idx) => (
+              {monthlyDefectRates.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50 transition-colors">
                   <td className="py-3 px-4 text-sm font-medium text-slate-800">{item.garmentType}</td>
                   <td className="py-3 px-4 text-sm text-slate-600">{item.line}</td>

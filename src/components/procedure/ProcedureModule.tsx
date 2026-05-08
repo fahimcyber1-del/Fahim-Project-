@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, ProcedureRecord } from './types';
 import { INITIAL_PROCEDURES } from './mockData';
@@ -9,7 +10,7 @@ import { GitCommit, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function ProcedureModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<ProcedureRecord[]>(INITIAL_PROCEDURES);
+  const [records, setRecords] = useApiStorage('aqm_procedure_records', INITIAL_PROCEDURES);
 
   const handleSave = (data: ProcedureRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

@@ -65,6 +65,10 @@ export function AuditList({ audits, onView, onEdit, onDelete, onCreate }: AuditL
     setSelectedIds(newSelect);
   };
 
+  const handleDeleteSelected = () => {
+    setConfirmDelete({ ids: Array.from(selectedIds), message: `Are you sure you want to delete ${selectedIds.size} records?` });
+  };
+
   const handleConfirmDelete = () => {
     if (confirmDelete.ids && confirmDelete.ids.length > 0) {
       onDelete(confirmDelete.ids);

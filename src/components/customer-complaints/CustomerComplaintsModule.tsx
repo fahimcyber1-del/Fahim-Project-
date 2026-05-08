@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, CustomerComplaintRecord } from './types';
 import { INITIAL_COMPLAINTS } from './mockData';
@@ -9,7 +10,7 @@ import { LayoutDashboard, List, PlusCircle } from 'lucide-react';
 
 export function CustomerComplaintsModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<CustomerComplaintRecord[]>(INITIAL_COMPLAINTS);
+  const [records, setRecords] = useApiStorage('aqm_customercomplaints_records', INITIAL_COMPLAINTS);
 
   const handleSave = (data: CustomerComplaintRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

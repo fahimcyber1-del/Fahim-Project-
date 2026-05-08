@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Users, Database, Shield, Activity, HardDrive, Cpu, Clock } from 'lucide-react';
 
@@ -21,7 +22,7 @@ export function OverviewSettings() {
     // 1. Calculate Active Users
     let usersCount = 0;
     try {
-      const storedUsers = localStorage.getItem('aqm_users');
+      const storedUsers = apiStorage.getItem('aqm_users');
       if (storedUsers) {
         const users = JSON.parse(storedUsers);
         usersCount = users.filter((u: any) => u.status === 'Active').length || users.length;
@@ -32,10 +33,10 @@ export function OverviewSettings() {
 
     // 2. Estimate local storage size
     let totalBytes = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
+    for (let i = 0; i < apiStorage.length; i++) {
+        const key = apiStorage.key(i);
         if (key) {
-            const item = localStorage.getItem(key);
+            const item = apiStorage.getItem(key);
             if (item) {
                 totalBytes += key.length + item.length;
             }
@@ -55,7 +56,7 @@ export function OverviewSettings() {
     // 3. Security Posture
     try {
       // General Settings / Security
-      const securityRaw = localStorage.getItem('aqm_security_settings');
+      const securityRaw = apiStorage.getItem('aqm_security_settings');
       if (securityRaw) {
         const sec = JSON.parse(securityRaw);
         setSecurityData({
@@ -70,7 +71,7 @@ export function OverviewSettings() {
     
     // 4. Recent Activity
     try {
-      const activityRaw = localStorage.getItem('aqm_activity_log');
+      const activityRaw = apiStorage.getItem('aqm_activity_log');
       if (activityRaw) {
         const parsed = JSON.parse(activityRaw);
         setRecentActivity(parsed.slice(0, 4).map((a: any) => ({

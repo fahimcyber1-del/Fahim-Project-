@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { QualityRecord, ViewState } from './types';
 import { INITIAL_RECORDS } from './mockData';
@@ -9,7 +10,7 @@ import { ProductionQualityManage } from './ProductionQualityManage';
 import { LayoutDashboard, List, FileText, Settings } from 'lucide-react';
 
 export function ProductionQualityModule() {
-  const [records, setRecords] = useState<QualityRecord[]>(INITIAL_RECORDS);
+  const [records, setRecords] = useApiStorage('aqm_productionquality_records', INITIAL_RECORDS);
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
 
   // Config State

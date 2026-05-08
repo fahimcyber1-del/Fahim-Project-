@@ -3,9 +3,16 @@ import { DEFECTS_DATA, PRODUCTION_TRENDS, QUALITY_TRENDS, FINANCIAL_METRICS, TOP
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { exportToCsv } from './ExportUtils';
 import { Download } from 'lucide-react';
+import { useApiData } from '../../hooks/useApiData';
 
 export function OverviewReport() {
   const COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b'];
+
+  const productionTrends = useApiData('production_trends', PRODUCTION_TRENDS);
+  const defectsData = useApiData('defects', DEFECTS_DATA);
+  const qualityTrends = useApiData('quality_trends', QUALITY_TRENDS);
+  const financialMetrics = useApiData('financial_metrics', FINANCIAL_METRICS);
+  const topDefects = useApiData('top_defects_last_quarter', TOP_DEFECTS_LAST_QUARTER);
 
   return (
     <div className="space-y-6">
@@ -14,13 +21,13 @@ export function OverviewReport() {
         <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
           <div className="flex justify-between items-center mb-6">
              <h3 className="text-lg font-bold text-slate-800">Production vs Expected</h3>
-             <button onClick={() => exportToCsv('production-overview', PRODUCTION_TRENDS)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
+             <button onClick={() => exportToCsv('production-overview', productionTrends)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
                <Download className="w-4 h-4" />
              </button>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={PRODUCTION_TRENDS} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={productionTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
@@ -51,7 +58,7 @@ export function OverviewReport() {
         <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
           <div className="flex justify-between items-center mb-6">
              <h3 className="text-lg font-bold text-slate-800">Top Defects Breakdown</h3>
-             <button onClick={() => exportToCsv('defects-overview', DEFECTS_DATA)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
+             <button onClick={() => exportToCsv('defects-overview', defectsData)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
                <Download className="w-4 h-4" />
              </button>
           </div>
@@ -59,7 +66,7 @@ export function OverviewReport() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={DEFECTS_DATA}
+                  data={defectsData}
                   cx="50%"
                   cy="50%"
                   innerRadius={70}
@@ -67,7 +74,7 @@ export function OverviewReport() {
                   paddingAngle={2}
                   dataKey="count"
                 >
-                  {DEFECTS_DATA.map((entry, index) => (
+                  {defectsData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -85,13 +92,13 @@ export function OverviewReport() {
         <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
            <div className="flex justify-between items-center mb-6">
              <h3 className="text-lg font-bold text-slate-800">Quality Defect Rates (6 Mo)</h3>
-             <button onClick={() => exportToCsv('quality-trends-overview', QUALITY_TRENDS)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
+             <button onClick={() => exportToCsv('quality-trends-overview', qualityTrends)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
                <Download className="w-4 h-4" />
              </button>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={QUALITY_TRENDS} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={qualityTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
@@ -111,13 +118,13 @@ export function OverviewReport() {
         <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm">
            <div className="flex justify-between items-center mb-6">
              <h3 className="text-lg font-bold text-slate-800">Financial Performance</h3>
-             <button onClick={() => exportToCsv('financial-overview', FINANCIAL_METRICS)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
+             <button onClick={() => exportToCsv('financial-overview', financialMetrics)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
                <Download className="w-4 h-4" />
              </button>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={FINANCIAL_METRICS} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+              <BarChart data={financialMetrics} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                 <YAxis hide />
@@ -138,13 +145,13 @@ export function OverviewReport() {
         <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-xl shadow-sm md:col-span-2">
           <div className="flex justify-between items-center mb-6">
              <h3 className="text-lg font-bold text-slate-800">Top 5 Most Frequent Defects (Last Quarter)</h3>
-             <button onClick={() => exportToCsv('top-defects-quarter', TOP_DEFECTS_LAST_QUARTER)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
+             <button onClick={() => exportToCsv('top-defects-quarter', topDefects)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors" title="Export CSV">
                <Download className="w-4 h-4" />
              </button>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={TOP_DEFECTS_LAST_QUARTER} layout="vertical" margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={topDefects} layout="vertical" margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b', fontWeight: 600 }} width={120} />
@@ -154,7 +161,7 @@ export function OverviewReport() {
                   itemStyle={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}
                 />
                 <Bar dataKey="count" name="Defect Count" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={32}>
-                  {TOP_DEFECTS_LAST_QUARTER.map((entry, index) => (
+                  {topDefects.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>

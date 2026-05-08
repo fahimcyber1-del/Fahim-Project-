@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState } from 'react';
 import { Palette, Monitor, Moon, Sun, Layout, Save, Image as ImageIcon, Box, Type } from 'lucide-react';
 import { useAppearance } from './AppearanceContext';
@@ -16,7 +17,7 @@ export function AppearanceSettings() {
     
     // Log activity
     try {
-      const activityRaw = localStorage.getItem('aqm_activity_log');
+      const activityRaw = apiStorage.getItem('aqm_activity_log');
       let activities: any[] = [];
       if (activityRaw) {
         try {
@@ -26,7 +27,7 @@ export function AppearanceSettings() {
       }
       
       let currentUser = 'Unknown User';
-      const userRaw = localStorage.getItem('aqm_current_user');
+      const userRaw = apiStorage.getItem('aqm_current_user');
       if (userRaw) {
         try {
           currentUser = JSON.parse(userRaw)?.name || currentUser;
@@ -43,7 +44,7 @@ export function AppearanceSettings() {
         ipAddress: '192.168.1.1',
         status: 'Success'
       });
-      localStorage.setItem('aqm_activity_log', JSON.stringify(activities.slice(0, 50)));
+      apiStorage.setItem('aqm_activity_log', JSON.stringify(activities.slice(0, 50)));
     } catch (e) {
       console.error(e);
     }
@@ -239,6 +240,7 @@ export function AppearanceSettings() {
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
                   <option value="glass">Glassmorphism</option>
+                  <option value="brutalist">Brutalist</option>
                 </select>
               </div>
               <div>
@@ -252,6 +254,7 @@ export function AppearanceSettings() {
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
                   <option value="glass">Glassmorphism</option>
+                  <option value="brutalist">Brutalist</option>
                 </select>
               </div>
             </div>
@@ -260,7 +263,7 @@ export function AppearanceSettings() {
           <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
               <Type className="w-4 h-4 text-slate-500" />
-              Typography & Cards
+              Typography & Elements
             </h3>
             <div className="space-y-4">
               <div>
@@ -287,6 +290,40 @@ export function AppearanceSettings() {
                   <option value="shadow">Soft Shadow</option>
                   <option value="flat">Flat (No Shadow)</option>
                   <option value="outline">Outline Only</option>
+                  <option value="brutalist">Brutalist</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Button Style</label>
+                <select 
+                  value={localSettings.buttonStyle}
+                  onChange={(e) => setLocalSettings({...localSettings, buttonStyle: e.target.value})}
+                  disabled={!canEdit}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-500"
+                >
+                  <option value="rounded">Rounded</option>
+                  <option value="pill">Pill</option>
+                  <option value="square">Square</option>
+                  <option value="brutalist">Brutalist</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Overall UI Style</label>
+                <select 
+                  value={localSettings.uiStyle || 'default'}
+                  onChange={(e) => setLocalSettings({...localSettings, uiStyle: e.target.value})}
+                  disabled={!canEdit}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-500"
+                >
+                  <option value="default">Default</option>
+                  <option value="brutalist">Brutalist Overall</option>
+                  <option value="neobrutalism">Neo-Brutalism</option>
+                  <option value="glassmorphism">Glassmorphism</option>
+                  <option value="cyberpunk">Cyberpunk</option>
+                  <option value="neumorphism">Neumorphism</option>
+                  <option value="terminal">Retro Terminal</option>
+                  <option value="playful">Clean & Colorful</option>
+                  <option value="vibrant">Vibrant Minimal</option>
                 </select>
               </div>
             </div>

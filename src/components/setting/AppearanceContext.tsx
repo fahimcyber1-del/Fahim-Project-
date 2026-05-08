@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface AppearanceState {
@@ -9,7 +10,9 @@ export interface AppearanceState {
   sidebarStyle: string;
   topbarStyle: string;
   cardStyle: string;
+  buttonStyle: string;
   fontStyle: string;
+  uiStyle: string;
 }
 
 const defaultState: AppearanceState = {
@@ -20,7 +23,9 @@ const defaultState: AppearanceState = {
   sidebarStyle: 'light',
   topbarStyle: 'light',
   cardStyle: 'shadow',
-  fontStyle: 'inter'
+  buttonStyle: 'rounded',
+  fontStyle: 'inter',
+  uiStyle: 'default'
 };
 
 interface AppearanceContextType {
@@ -33,7 +38,7 @@ const AppearanceContext = createContext<AppearanceContextType | undefined>(undef
 export function AppearanceProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppearanceState>(() => {
     try {
-      const stored = localStorage.getItem('aqm_appearance');
+      const stored = apiStorage.getItem('aqm_appearance');
       if (stored) {
         const parsed = JSON.parse(stored);
         if (typeof parsed === 'object' && parsed !== null) {
@@ -49,7 +54,7 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
   const updateSettings = (newSettings: Partial<AppearanceState>) => {
     setSettings(prev => {
       const updated = { ...prev, ...newSettings };
-      localStorage.setItem('aqm_appearance', JSON.stringify(updated));
+      apiStorage.setItem('aqm_appearance', JSON.stringify(updated));
       return updated;
     });
   };
@@ -61,9 +66,20 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     } else {
       document.documentElement.classList.remove('dark');
     }
+
+    if (settings.uiStyle === 'brutalist') {
+      document.documentElement.classList.add('brutalist-ui');
+    } else {
+      document.documentElement.classList.remove('brutalist-ui');
+    }
     
     // Apply accent color modifier
     document.documentElement.setAttribute('data-accent', settings.accent);
+    document.documentElement.setAttribute('data-button-style', settings.buttonStyle);
+    document.documentElement.setAttribute('data-sidebar-style', settings.sidebarStyle);
+    document.documentElement.setAttribute('data-topbar-style', settings.topbarStyle);
+    document.documentElement.setAttribute('data-card-style', settings.cardStyle);
+    document.documentElement.setAttribute('data-ui-style', settings.uiStyle);
   }, [settings]);
 
   const getFontClass = () => {

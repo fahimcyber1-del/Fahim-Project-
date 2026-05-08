@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, ProcessFlowRecord } from './types';
 import { INITIAL_FLOWS } from './mockData';
@@ -9,7 +10,7 @@ import { Workflow, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function ProcessFlowModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<ProcessFlowRecord[]>(INITIAL_FLOWS);
+  const [records, setRecords] = useApiStorage('aqm_processflow_records', INITIAL_FLOWS);
 
   const handleSave = (data: ProcessFlowRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, QualityGoalRecord } from './types';
 import { INITIAL_GOALS } from './mockData';
@@ -9,7 +10,7 @@ import { LayoutDashboard, List, PlusCircle } from 'lucide-react';
 
 export function QualityGoalModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<QualityGoalRecord[]>(INITIAL_GOALS);
+  const [records, setRecords] = useApiStorage('aqm_qualitygoal_records', INITIAL_GOALS);
 
   const handleSave = (data: QualityGoalRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

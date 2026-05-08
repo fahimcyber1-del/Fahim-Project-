@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, InventoryItem, InventoryTransaction } from './types';
 import { INITIAL_INVENTORY, INITIAL_TRANSACTIONS } from './mockData';
@@ -10,7 +11,7 @@ import { LayoutDashboard, List, PackageOpen, ArrowLeftRight } from 'lucide-react
 
 export function QualityInventoryModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [items, setItems] = useState<InventoryItem[]>(INITIAL_INVENTORY);
+  const [items, setItems] = useApiStorage('aqm_qualityinventory_items', INITIAL_INVENTORY);
   const [transactions, setTransactions] = useState<InventoryTransaction[]>(INITIAL_TRANSACTIONS);
 
   const handleSaveItem = (data: InventoryItem) => {

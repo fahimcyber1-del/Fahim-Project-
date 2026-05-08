@@ -1,30 +1,26 @@
 import React, { useState } from 'react';
 import { X, FileText, Download } from 'lucide-react';
 
-interface ExportModalProps {
-  onClose: () => void;
-  onExportPDF: (options: ExportOptions) => void;
-  onExportCSV: (options: ExportOptions) => void;
-}
-
-export interface ExportOptions {
-  includeFindings: boolean;
-  includeCorrectiveActions: boolean;
-  includeScores: boolean;
+export interface InspectionExportOptions {
+  includeChecks: boolean;
   includeImages: boolean;
   includeSignature: boolean;
 }
 
+interface ExportModalProps {
+  onClose: () => void;
+  onExportPDF: (options: InspectionExportOptions) => void;
+  onExportCSV: (options: InspectionExportOptions) => void;
+}
+
 export function ExportModal({ onClose, onExportPDF, onExportCSV }: ExportModalProps) {
-  const [options, setOptions] = useState<ExportOptions>({
-    includeFindings: true,
-    includeCorrectiveActions: true,
-    includeScores: true,
+  const [options, setOptions] = useState<InspectionExportOptions>({
+    includeChecks: true,
     includeImages: false,
     includeSignature: true,
   });
 
-  const handleToggle = (key: keyof ExportOptions) => {
+  const handleToggle = (key: keyof InspectionExportOptions) => {
     setOptions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -42,36 +38,18 @@ export function ExportModal({ onClose, onExportPDF, onExportCSV }: ExportModalPr
           <label className="flex items-center gap-3 cursor-pointer">
             <input 
               type="checkbox" 
-              checked={options.includeFindings} 
-              onChange={() => handleToggle('includeFindings')}
-              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+              checked={options.includeChecks} 
+              onChange={() => handleToggle('includeChecks')}
+              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
             />
-            <span className="text-sm font-medium text-slate-700">Detailed Findings</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={options.includeCorrectiveActions} 
-              onChange={() => handleToggle('includeCorrectiveActions')}
-              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-            />
-            <span className="text-sm font-medium text-slate-700">Corrective Actions</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={options.includeScores} 
-              onChange={() => handleToggle('includeScores')}
-              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-            />
-            <span className="text-sm font-medium text-slate-700">Calculated Scores</span>
+            <span className="text-sm font-medium text-slate-700">Include Checks</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input 
               type="checkbox" 
               checked={options.includeImages} 
               onChange={() => handleToggle('includeImages')}
-              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
             />
             <span className="text-sm font-medium text-slate-700">Images (PDF only)</span>
           </label>
@@ -80,7 +58,7 @@ export function ExportModal({ onClose, onExportPDF, onExportCSV }: ExportModalPr
               type="checkbox" 
               checked={options.includeSignature} 
               onChange={() => handleToggle('includeSignature')}
-              className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+              className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
             />
             <span className="text-sm font-medium text-slate-700">E-Signature</span>
           </label>
@@ -89,13 +67,13 @@ export function ExportModal({ onClose, onExportPDF, onExportCSV }: ExportModalPr
         <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
           <button 
             onClick={() => { onExportPDF(options); onClose(); }} 
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
+            className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
           >
             <FileText className="w-4 h-4" /> PDF
           </button>
           <button 
             onClick={() => { onExportCSV(options); onClose(); }} 
-            className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
+            className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm"
           >
             <Download className="w-4 h-4" /> Excel/CSV
           </button>

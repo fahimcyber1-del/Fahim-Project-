@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, RiskRecord } from './types';
 import { INITIAL_RISKS } from './mockData';
@@ -10,7 +11,7 @@ import { ShieldAlert, List, PlusCircle, LayoutDashboard, Settings } from 'lucide
 
 export function RiskAssessmentModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<RiskRecord[]>(INITIAL_RISKS);
+  const [records, setRecords] = useApiStorage('aqm_riskassessment_records', INITIAL_RISKS);
 
   const handleSave = (data: RiskRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

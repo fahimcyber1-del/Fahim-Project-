@@ -22,7 +22,7 @@ export function AuditModule() {
   };
 
   const handleDelete = (ids: string[]) => {
-    setRecords(prev => prev.filter(r => !ids.includes(r.id)));
+    setRecords(records.filter(r => !ids.includes(r.id)));
   };
 
   const renderNav = () => (

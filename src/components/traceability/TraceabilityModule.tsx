@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, TraceabilityRecord } from './types';
 import { mockTraceabilityRecords } from './mockData';
@@ -9,7 +10,7 @@ import { LayoutDashboard, Map, PlusCircle } from 'lucide-react';
 
 export function TraceabilityModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<TraceabilityRecord[]>(mockTraceabilityRecords);
+  const [records, setRecords] = useApiStorage<TraceabilityRecord>('aqm_traceability_records', mockTraceabilityRecords);
 
   const handleSave = (data: TraceabilityRecord) => {
     setRecords([data, ...records]);

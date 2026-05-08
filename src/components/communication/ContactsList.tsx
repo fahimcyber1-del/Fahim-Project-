@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect } from 'react';
 import { Search, Mail, Phone, MapPin, Building2, UserCircle } from 'lucide-react';
 
@@ -7,7 +8,7 @@ export function ContactsList({ onMessageClick }: { onMessageClick?: (user: any) 
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('aqm_users');
+      const stored = apiStorage.getItem('aqm_users');
       if (stored) {
         const users = JSON.parse(stored);
         if (Array.isArray(users)) {

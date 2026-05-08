@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Send, File, Image as ImageIcon, Smile, Phone, Video, Users, Plus, X, UserCircle, Trash2 } from 'lucide-react';
 
@@ -21,10 +22,10 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
   // Load User Data
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem('userProfile') || localStorage.getItem('aqm_current_user');
+      const storedUser = apiStorage.getItem('userProfile') || apiStorage.getItem('aqm_current_user');
       if (storedUser) setCurrentUser(JSON.parse(storedUser));
       
-      const storedUsers = localStorage.getItem('aqm_users');
+      const storedUsers = apiStorage.getItem('aqm_users');
       if (storedUsers) setUsers(JSON.parse(storedUsers));
     } catch (e) {
       console.error('Failed to load user data', e);
@@ -36,13 +37,13 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
     if (!currentUser) return;
     
     try {
-      const rawConvos = localStorage.getItem('aqm_conversations');
+      const rawConvos = apiStorage.getItem('aqm_conversations');
       const allConvos = rawConvos ? JSON.parse(rawConvos) : [];
       // Only show conversations where current user is a participant
       const myConvos = allConvos.filter((c: any) => c.participants.includes(currentUser.email));
       setConversations(myConvos);
 
-      const rawMsgs = localStorage.getItem('aqm_messages');
+      const rawMsgs = apiStorage.getItem('aqm_messages');
       if (rawMsgs) setMessages(JSON.parse(rawMsgs));
     } catch (e) {
       console.error('Failed to load chat data', e);
@@ -70,7 +71,7 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
     if (!currentUser || targetUser.email === currentUser.email) return;
 
     // Check if conversation already exists
-    const rawConvos = localStorage.getItem('aqm_conversations');
+    const rawConvos = apiStorage.getItem('aqm_conversations');
     const allConvos = rawConvos ? JSON.parse(rawConvos) : [];
     
     let existingConvo = allConvos.find((c: any) => 
@@ -92,7 +93,7 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
       };
       
       allConvos.push(newConvo);
-      localStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
+      apiStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
       existingConvo = newConvo;
       convoId = newConvo.id;
       
@@ -106,7 +107,7 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
   const createGroupChat = () => {
     if (!currentUser || selectedUsers.length === 0 || !groupName.trim()) return;
 
-    const rawConvos = localStorage.getItem('aqm_conversations');
+    const rawConvos = apiStorage.getItem('aqm_conversations');
     const allConvos = rawConvos ? JSON.parse(rawConvos) : [];
 
     const newConvo = {
@@ -119,7 +120,7 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
     };
 
     allConvos.push(newConvo);
-    localStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
+    apiStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
     
     setConversations(allConvos.filter((c: any) => c.participants.includes(currentUser.email)));
     setActiveConversationId(newConvo.id);
@@ -144,21 +145,21 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
     };
 
     try {
-      const rawMsgs = localStorage.getItem('aqm_messages');
+      const rawMsgs = apiStorage.getItem('aqm_messages');
       const allMsgs = rawMsgs ? JSON.parse(rawMsgs) : [];
       allMsgs.push(newMsg);
-      localStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
+      apiStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
       setMessages(allMsgs);
       
       // Update last message in conversation
-      const rawConvos = localStorage.getItem('aqm_conversations');
+      const rawConvos = apiStorage.getItem('aqm_conversations');
       if (rawConvos) {
         const allConvos = JSON.parse(rawConvos);
         const convoIndex = allConvos.findIndex((c: any) => c.id === activeConversationId);
         if (convoIndex !== -1) {
           allConvos[convoIndex].lastMessage = newMessage;
           allConvos[convoIndex].lastMessageTime = new Date().toISOString();
-          localStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
+          apiStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
           setConversations(allConvos.filter((c: any) => c.participants.includes(currentUser.email)));
         }
       }
@@ -171,19 +172,19 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
 
   const deleteGroupChat = (id: string) => {
     try {
-      const rawConvos = localStorage.getItem('aqm_conversations');
+      const rawConvos = apiStorage.getItem('aqm_conversations');
       if (rawConvos) {
         let allConvos = JSON.parse(rawConvos);
         allConvos = allConvos.filter((c: any) => c.id !== id);
-        localStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
+        apiStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
         setConversations(allConvos.filter((c: any) => c.participants.includes(currentUser.email)));
       }
       
-      const rawMsgs = localStorage.getItem('aqm_messages');
+      const rawMsgs = apiStorage.getItem('aqm_messages');
       if (rawMsgs) {
         let allMsgs = JSON.parse(rawMsgs);
         allMsgs = allMsgs.filter((m: any) => m.conversationId !== id);
-        localStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
+        apiStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
         setMessages(allMsgs);
       }
       
@@ -212,21 +213,21 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
       };
 
       try {
-        const rawMsgs = localStorage.getItem('aqm_messages');
+        const rawMsgs = apiStorage.getItem('aqm_messages');
         const allMsgs = rawMsgs ? JSON.parse(rawMsgs) : [];
         allMsgs.push(newMsg);
-        localStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
+        apiStorage.setItem('aqm_messages', JSON.stringify(allMsgs));
         setMessages(allMsgs);
         
         // Update last message in conversation
-        const rawConvos = localStorage.getItem('aqm_conversations');
+        const rawConvos = apiStorage.getItem('aqm_conversations');
         if (rawConvos) {
           const allConvos = JSON.parse(rawConvos);
           const convoIndex = allConvos.findIndex((c: any) => c.id === activeConversationId);
           if (convoIndex !== -1) {
             allConvos[convoIndex].lastMessage = '📷 Image';
             allConvos[convoIndex].lastMessageTime = new Date().toISOString();
-            localStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
+            apiStorage.setItem('aqm_conversations', JSON.stringify(allConvos));
             setConversations(allConvos.filter((c: any) => c.participants.includes(currentUser.email)));
           }
         }

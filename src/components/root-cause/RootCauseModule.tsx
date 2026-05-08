@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, RootCauseRecord } from './types';
 import { INITIAL_RCA_RECORDS } from './mockData';
@@ -9,7 +10,7 @@ import { GitMerge, List, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 export function RootCauseModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<RootCauseRecord[]>(INITIAL_RCA_RECORDS);
+  const [records, setRecords] = useApiStorage('aqm_rootcause_records', INITIAL_RCA_RECORDS);
 
   const handleSave = (data: RootCauseRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

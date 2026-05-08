@@ -147,6 +147,81 @@ export function AuditDetail({ record, onBack }: AuditDetailProps) {
         }
       });
     }
+
+    if (options.includeSignature) {
+      if (record.signatures && record.signatures.length > 0) {
+        let sigY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 20 : 250;
+        if (sigY > 220) {
+          doc.addPage();
+          sigY = 20;
+        }
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text('E-Signatures / Approvals', 14, sigY);
+        doc.setFontSize(10);
+        
+        let startX = 14;
+        let startY = sigY + 10;
+        const colWidth = 90;
+
+        record.signatures.forEach((sig, index) => {
+          if (startX > 150) {
+             startX = 14;
+             startY += 60;
+             if (startY > 250) {
+               doc.addPage();
+               startY = 20;
+             }
+          }
+
+          let currentY = startY;
+          if (sig.image) {
+            try {
+              doc.addImage(sig.image, 'PNG', startX, currentY, 40, 20);
+              currentY += 25;
+            } catch (e) {
+              console.error("Failed to add signature image to PDF", e);
+              currentY += 5;
+            }
+          } else {
+            currentY += 5;
+          }
+
+          doc.text(`Signed By: ${sig.name || '________________'}`, startX, currentY);
+          doc.text(`Designation: ${sig.designation || '________________'}`, startX, currentY + 8);
+          doc.text(`Date: ${sig.date || '________________'}`, startX, currentY + 16);
+
+          startX += colWidth;
+        });
+
+      } else if (record.signature || record.signatureDesignation || record.signatureImage) {
+        let sigY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 20 : 250;
+        if (sigY > 220) {
+          doc.addPage();
+          sigY = 20;
+        }
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text('E-Signature / Approval', 14, sigY);
+        doc.setFontSize(10);
+        
+        let nextLineY = sigY + 10;
+        
+        if (record.signatureImage) {
+          try {
+            doc.addImage(record.signatureImage, 'PNG', 14, nextLineY, 50, 25);
+            nextLineY += 30;
+          } catch (e) {
+            console.error("Failed to add signature image to PDF", e);
+          }
+        }
+        
+        doc.text(`Signed By: ${record.signature || '____________________'}`, 14, nextLineY);
+        doc.text(`Designation: ${record.signatureDesignation || '____________________'}`, 14, nextLineY + 8);
+        doc.text(`Date: ${record.signatureDate || '____________________'}`, 14, nextLineY + 16);
+      }
+    }
     
     doc.save(`Audit_Report_${record.id}.pdf`);
   };
@@ -172,6 +247,20 @@ export function AuditDetail({ record, onBack }: AuditDetailProps) {
 
       if (options.includeCorrectiveActions) {
          baseRow['Corrective Actions'] = record.findings?.filter(f => f.correctiveAction).map(f => f.correctiveAction).join(' | ') || '';
+      }
+
+      if (options.includeSignature) {
+         if (record.signatures && record.signatures.length > 0) {
+           record.signatures.forEach((sig, index) => {
+             baseRow[`Signature ${index + 1} Name`] = sig.name || '';
+             baseRow[`Signature ${index + 1} Designation`] = sig.designation || '';
+             baseRow[`Signature ${index + 1} Date`] = sig.date || '';
+           });
+         } else {
+           baseRow['Signature Name'] = record.signature || '';
+           baseRow['Designation'] = record.signatureDesignation || '';
+           baseRow['Signature Date'] = record.signatureDate || '';
+         }
       }
 
       const worksheet = XLSX.utils.json_to_sheet([baseRow]);
@@ -384,6 +473,71 @@ export function AuditDetail({ record, onBack }: AuditDetailProps) {
           {record.attachments && record.attachments.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
               <FileViewer attachments={record.attachments} />
+            </div>
+          )}
+
+          {(record.signatures && record.signatures.length > 0) && (
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-6 border-b border-slate-100 pb-2">E-Signatures / Approvals</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {record.signatures.map((sig) => (
+                  <div key={sig.id} className="border border-slate-100 rounded-lg p-4 bg-slate-50 relative">
+                    {sig.image && (
+                      <div className="mb-4">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">DRAWN SIGNATURE</p>
+                        <div className="border border-slate-200 rounded p-1 inline-block bg-white shadow-sm">
+                          <img src={sig.image} alt="E-Signature" className="h-20 object-contain mix-blend-multiply" />
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 gap-2">
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">SIGNED BY</p>
+                        <p className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-1 mt-1 inline-block font-serif italic">{sig.name || '________________'}</p>
+                      </div>
+                      <div className="flex justify-between items-end mt-2">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">DESIGNATION</p>
+                          <p className="text-xs font-medium text-slate-700 mt-1">{sig.designation || '________________'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1"><Calendar className="w-3 h-3"/> DATE</p>
+                          <p className="text-xs font-medium text-slate-700 mt-1">{sig.date || '________________'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Legacy handling fallback */}
+          {(!record.signatures || record.signatures.length === 0) && (record.signature || record.signatureDesignation || record.signatureImage) && (
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-6 border-b border-slate-100 pb-2">E-Signature Approval</h3>
+              {record.signatureImage && (
+                <div className="mb-6">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">DRAWN SIGNATURE</p>
+                  <div className="border border-slate-200 rounded-lg p-2 inline-block bg-slate-50">
+                    <img src={record.signatureImage} alt="E-Signature" className="h-24 object-contain mix-blend-multiply" />
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase">SIGNED BY</p>
+                  <p className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-1 mt-2 inline-block min-w-32 font-serif italic">{record.signature || '________________'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase">DESIGNATION</p>
+                  <p className="text-sm font-medium text-slate-800 mt-2">{record.signatureDesignation || '________________'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1"><Calendar className="w-3 h-3"/> DATE</p>
+                  <p className="text-sm font-medium text-slate-800 mt-2">{record.signatureDate || '________________'}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>

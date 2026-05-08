@@ -1,3 +1,4 @@
+import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect } from 'react';
 import { Bell, Mail, Smartphone, AlertCircle, Clock, Save, ShieldAlert, FileCheck, MessageSquare } from 'lucide-react';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -36,11 +37,26 @@ export function NotificationSettings() {
     dndEnabled: false,
     dndStart: '22:00',
     dndEnd: '08:00',
+
+    // SMTP Settings
+    smtpHost: '',
+    smtpPort: '587',
+    smtpUser: '',
+    smtpPass: '',
+    smtpFrom: '',
+
+    // WhatsApp Settings
+    whatsappEnabled: false,
+    whatsappNumber: '',
+    whatsappApiKey: '',
   });
+
+  const [testEmailStatus, setTestEmailStatus] = useState<string>('');
+  const [testWhatsappStatus, setTestWhatsappStatus] = useState<string>('');
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('aqm_notification_settings');
+      const stored = apiStorage.getItem('aqm_notification_settings');
       if (stored) {
         setSettings(JSON.parse(stored));
       }
@@ -62,7 +78,7 @@ export function NotificationSettings() {
     if (!canEdit) return;
     setIsSaving(true);
     try {
-      localStorage.setItem('aqm_notification_settings', JSON.stringify(settings));
+      apiStorage.setItem('aqm_notification_settings', JSON.stringify(settings));
     } catch (e) {
       console.error('Failed to save notification settings', e);
     }
@@ -71,6 +87,57 @@ export function NotificationSettings() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }, 600);
+  };
+
+  const handleTestEmail = async () => {
+    setTestEmailStatus('Sending...');
+    try {
+      const baseUrl = typeof window !== 'undefined' ? localStorage.getItem('global_api_url')?.replace(/\/$/, '') || '' : '';
+      const res = await fetch(`${baseUrl}/api/notifications/test-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          host: settings.smtpHost,
+          port: settings.smtpPort,
+          user: settings.smtpUser,
+          pass: settings.smtpPass,
+          from: settings.smtpFrom,
+          to: 'test@example.com' // Using a default test target
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestEmailStatus('Success! Email sent.');
+      } else {
+        setTestEmailStatus(`Failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (e: any) {
+      setTestEmailStatus(`Error: ${e.message}`);
+    }
+  };
+
+  const handleTestWhatsapp = async () => {
+    setTestWhatsappStatus('Sending...');
+    try {
+      const baseUrl = typeof window !== 'undefined' ? localStorage.getItem('global_api_url')?.replace(/\/$/, '') || '' : '';
+      const res = await fetch(`${baseUrl}/api/notifications/test-whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          number: settings.whatsappNumber,
+          apiKey: settings.whatsappApiKey,
+          message: 'Test message from QMS System'
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestWhatsappStatus('Success! WhatsApp sent.');
+      } else {
+        setTestWhatsappStatus(`Failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (e: any) {
+      setTestWhatsappStatus(`Error: ${e.message}`);
+    }
   };
 
   return (
@@ -100,21 +167,108 @@ export function NotificationSettings() {
         {/* Delivery Methods */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <h3 className="text-sm font-bold text-slate-900 p-4 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-slate-500" /> Delivery Methods
+            <Bell className="w-4 h-4 text-slate-500" /> Delivery Methods & Integration
           </h3>
           <div className="divide-y divide-slate-100">
-            <div className="p-4 sm:p-6 flex items-start gap-4">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0 mt-0.5">
+            <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start gap-4">
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0 mt-0.5 self-start">
                 <Mail className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-bold text-slate-900">Email Alerts</h4>
-                <p className="text-sm text-slate-500 mt-1 max-w-md">Receive important updates and daily summaries delivered to your inbox.</p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">Email Alerts & SMTP Setup</h4>
+                    <p className="text-sm text-slate-500 mt-1 max-w-md">Receive important updates and daily summaries delivered to your inbox.</p>
+                  </div>
+                  <label className={`relative inline-flex items-center cursor-pointer shrink-0 ${!canEdit ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <input type="checkbox" name="emailAlerts" checked={settings.emailAlerts} onChange={handleChange} disabled={!canEdit} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+                
+                {settings.emailAlerts && (
+                  <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-4">
+                    <h5 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">SMTP Configuration</h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">SMTP Host</label>
+                        <input type="text" name="smtpHost" value={settings.smtpHost} onChange={handleChange} disabled={!canEdit} placeholder="smtp.gmail.com" className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-sm disabled:bg-slate-100" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">SMTP Port</label>
+                        <input type="text" name="smtpPort" value={settings.smtpPort} onChange={handleChange} disabled={!canEdit} placeholder="587" className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-sm disabled:bg-slate-100" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">SMTP Username</label>
+                        <input type="text" name="smtpUser" value={settings.smtpUser} onChange={handleChange} disabled={!canEdit} placeholder="user@example.com" className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-sm disabled:bg-slate-100" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">SMTP Password</label>
+                        <input type="password" name="smtpPass" value={settings.smtpPass} onChange={handleChange} disabled={!canEdit} placeholder="••••••••" className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-sm disabled:bg-slate-100" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">From Email Address</label>
+                        <input type="email" name="smtpFrom" value={settings.smtpFrom} onChange={handleChange} disabled={!canEdit} placeholder="noreply@example.com" className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-sm disabled:bg-slate-100" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-2">
+                      <button onClick={handleTestEmail} disabled={!canEdit || !settings.smtpHost} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded text-xs font-semibold transition-colors disabled:opacity-50">
+                        Test Connection
+                      </button>
+                      {testEmailStatus && (
+                        <span className={`text-xs ${testEmailStatus.includes('Success') ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {testEmailStatus}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              <label className={`relative inline-flex items-center cursor-pointer shrink-0 ${!canEdit ? 'opacity-50 pointer-events-none' : ''}`}>
-                <input type="checkbox" name="emailAlerts" checked={settings.emailAlerts} onChange={handleChange} disabled={!canEdit} className="sr-only peer" />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-              </label>
+            </div>
+
+            <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start gap-4">
+              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg shrink-0 mt-0.5 self-start">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">WhatsApp Integrations</h4>
+                    <p className="text-sm text-slate-500 mt-1 max-w-md">Send direct alert messages to WhatsApp numbers via API.</p>
+                  </div>
+                  <label className={`relative inline-flex items-center cursor-pointer shrink-0 ${!canEdit ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <input type="checkbox" name="whatsappEnabled" checked={settings.whatsappEnabled} onChange={handleChange} disabled={!canEdit} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                </div>
+
+                {settings.whatsappEnabled && (
+                  <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-4">
+                     <h5 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">WhatsApp API Setup</h5>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <div>
+                         <label className="block text-xs font-semibold text-slate-600 mb-1">Target Phone Number</label>
+                         <input type="text" name="whatsappNumber" value={settings.whatsappNumber} onChange={handleChange} disabled={!canEdit} placeholder="+1234567890" className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-emerald-500 focus:border-emerald-500 text-sm disabled:bg-slate-100" />
+                         <span className="text-[10px] text-slate-500">Number to send reports or notifications to. Include country code.</span>
+                       </div>
+                       <div>
+                         <label className="block text-xs font-semibold text-slate-600 mb-1">API Key / Token</label>
+                         <input type="password" name="whatsappApiKey" value={settings.whatsappApiKey} onChange={handleChange} disabled={!canEdit} placeholder="••••••••" className="w-full px-3 py-2 border border-slate-300 rounded focus:ring-emerald-500 focus:border-emerald-500 text-sm disabled:bg-slate-100" />
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-4 mt-2">
+                      <button onClick={handleTestWhatsapp} disabled={!canEdit || !settings.whatsappNumber} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded text-xs font-semibold transition-colors disabled:opacity-50">
+                        Test WhatsApp
+                      </button>
+                      {testWhatsappStatus && (
+                        <span className={`text-xs ${testWhatsappStatus.includes('Success') ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {testWhatsappStatus}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="p-4 sm:p-6 flex items-start gap-4">

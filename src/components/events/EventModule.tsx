@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { AppEvent } from './types';
@@ -18,7 +19,7 @@ type ViewState =
   | { type: 'detail', eventId: string };
 
 export function EventModule() {
-  const [events, setEvents] = useState<AppEvent[]>(MOCK_EVENTS);
+  const [events, setEvents] = useApiStorage<AppEvent>('aqm_events', MOCK_EVENTS);
   const [viewState, setViewState] = useState<ViewState>({ type: 'list' });
 
   const handleSaveEvent = (savedEvent: AppEvent) => {

@@ -1,3 +1,4 @@
+import { useApiStorage } from '../../hooks/useApiData';
 import React, { useState } from 'react';
 import { ViewState, CapaRecord } from './types';
 import { INITIAL_CAPAS } from './mockData';
@@ -9,7 +10,7 @@ import { LayoutDashboard, List, PlusCircle } from 'lucide-react';
 
 export function CapaModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
-  const [records, setRecords] = useState<CapaRecord[]>(INITIAL_CAPAS);
+  const [records, setRecords] = useApiStorage('aqm_capa_records', INITIAL_CAPAS);
 
   const handleSave = (data: CapaRecord) => {
     if (viewState.type === 'form' && viewState.recordId) {

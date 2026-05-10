@@ -238,7 +238,7 @@ export function DatabaseSettings() {
                                  >
                                     {isRestoring === backup.id ? <Play className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" fill="currentColor" />}
                                  </button>
-                                 <button onClick={() => handleDelete(backup.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Delete Backup">
+                                 <button onClick={() => { if (window.confirm('Are you sure you want to delete this backup?')) handleDelete(backup.id); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Delete Backup">
                                     <Trash2 className="w-4 h-4" />
                                  </button>
                               </div>

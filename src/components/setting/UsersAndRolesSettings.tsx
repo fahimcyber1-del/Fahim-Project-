@@ -303,7 +303,7 @@ function UserManagement({ users, onAdd, onEdit, onDelete, roles, canCreate, canE
                     )}
                     {canManage && (
                       <button 
-                        onClick={() => onDelete(user.id)}
+                        onClick={() => { if(window.confirm('Are you sure you want to delete this user?')) onDelete(user.id); }}
                         className={`p-1.5 rounded ${user.role === 'Super Admin' ? 'text-slate-300 cursor-not-allowed opacity-50' : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'}`} 
                         title={user.role === 'Super Admin' ? "Cannot delete Super Admin" : "Delete User"}
                         disabled={user.role === 'Super Admin'}

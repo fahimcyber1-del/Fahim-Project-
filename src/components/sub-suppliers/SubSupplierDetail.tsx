@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { SubSupplierRecord } from './types';
-import { ArrowLeft, Edit3, Building2, MapPin, Mail, Phone, Globe, Calendar, Star, ShieldAlert, ShoppingCart, Clock, CheckCircle2, XCircle, FileText, Activity } from 'lucide-react';
+import { ArrowLeft, Edit3, Building2, MapPin, Mail, Phone, Globe, Calendar, Star, ShieldAlert, ShoppingCart, Clock, CheckCircle2, XCircle, FileText, Activity, Download, History, User } from 'lucide-react';
 import { useAuditsState } from '../../store';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { ExportModal, SubSupplierExportOptions } from './ExportModal';
 
 interface SubSupplierDetailProps {
   record: SubSupplierRecord;
@@ -12,7 +16,231 @@ interface SubSupplierDetailProps {
 export function SubSupplierDetail({ record, onBack, onEdit }: SubSupplierDetailProps) {
   const { audits } = useAuditsState();
   const [showAudits, setShowAudits] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const supplierAudits = audits.filter(a => a.type === 'SUPPLIER' && a.subSupplier === record.name);
+
+  const handleExportPDF = (options: SubSupplierExportOptions) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFillColor(37, 99, 235); // blue-600
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SUB-SUPPLIER REPORT', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`Supplier ID: ${record.id}`, 14, 34);
+
+    if (record.documentCode) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Doc Code: ${record.documentCode}`, pageWidth - 14, 20, { align: 'right' });
+    }
+
+    let currentY = 50;
+
+    // Company Profile
+    if (options.includeCompanyProfile) {
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Company Profile', 14, currentY);
+      currentY += 6;
+
+      const profileData = [
+        ['Name', record.name, 'Status', record.status],
+        ['Category', record.category, 'Join Date', record.joinDate],
+        ['Country', record.country, 'Address', record.address]
+      ];
+
+      autoTable(doc, {
+        startY: currentY,
+        body: profileData,
+        theme: 'plain',
+        styles: { cellPadding: 3, fontSize: 10 },
+        columnStyles: {
+          0: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+          1: { cellWidth: 55 },
+          2: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+          3: { cellWidth: 55 }
+        }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeContactInfo) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Contact Information', 14, currentY);
+      currentY += 6;
+
+      const contactData = [
+        ['Primary Contact', record.contactPerson, 'Email', record.email],
+        ['Phone', record.phone, 'Website', record.website || '-']
+      ];
+
+      autoTable(doc, {
+        startY: currentY,
+        body: contactData,
+        theme: 'plain',
+        styles: { cellPadding: 3, fontSize: 10 },
+        columnStyles: {
+          0: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+          1: { cellWidth: 55 },
+          2: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+          3: { cellWidth: 55 }
+        }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeNotes && record.notes) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Notes & Remarks', 14, currentY);
+      currentY += 6;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const textLines = doc.splitTextToSize(record.notes, pageWidth - 28);
+      doc.text(textLines, 14, currentY);
+      currentY += (textLines.length * 5) + 10;
+    }
+
+    if (options.includePerformance) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Performance & Risk', 14, currentY);
+      currentY += 6;
+      
+      const perfData = [
+        ['Rating', `${record.rating} / 5`],
+        ['Risk Level', record.riskLevel]
+      ];
+      autoTable(doc, {
+        startY: currentY,
+        body: perfData,
+        theme: 'plain',
+        styles: { cellPadding: 3, fontSize: 10 },
+        columnStyles: {
+          0: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+          1: { cellWidth: 55 }
+        }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeCertifications && record.certifications && record.certifications.length > 0) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Certifications', 14, currentY);
+      currentY += 6;
+      
+      const certData = record.certifications.map(c => [c.name, c.validUntil]);
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Certification Name', 'Valid Until']],
+        body: certData,
+        theme: 'striped',
+        headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeAudits && supplierAudits.length > 0) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Audit History', 14, currentY);
+      currentY += 6;
+      
+      const auditsData = supplierAudits.map(a => [a.id, a.date, a.title, a.status, a.score ? `${a.score}%` : '-']);
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Audit ID', 'Date', 'Title', 'Status', 'Score']],
+        body: auditsData,
+        theme: 'striped',
+        headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    // Add footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+    }
+
+    doc.save(`SubSupplier_${record.name.replace(/\s+/g, '_')}.pdf`);
+  };
+
+  const handleExportCSV = (options: SubSupplierExportOptions) => {
+    const wb = XLSX.utils.book_new();
+
+    if (options.includeCompanyProfile || options.includeContactInfo || options.includePerformance) {
+      const basicInfo = [
+        ['Supplier ID', record.id],
+        ['Name', record.name],
+        ['Status', record.status],
+        ...(options.includeCompanyProfile ? [
+          ['Category', record.category],
+          ['Join Date', record.joinDate],
+          ['Country', record.country],
+          ['Address', record.address],
+        ] : []),
+        ...(options.includeContactInfo ? [
+          ['Contact Person', record.contactPerson],
+          ['Email', record.email],
+          ['Phone', record.phone],
+          ['Website', record.website || ''],
+        ] : []),
+        ...(options.includePerformance ? [
+          ['Rating', record.rating],
+          ['Risk Level', record.riskLevel],
+        ] : []),
+        ...(options.includeNotes ? [
+          ['Notes', record.notes || ''],
+        ] : []),
+      ];
+      const wsBasic = XLSX.utils.aoa_to_sheet(basicInfo);
+      XLSX.utils.book_append_sheet(wb, wsBasic, 'Basic Info');
+    }
+
+    if (options.includeCertifications && record.certifications && record.certifications.length > 0) {
+      const certData = record.certifications.map(c => ({
+        'Name': c.name,
+        'Valid Until': c.validUntil
+      }));
+      const wsCert = XLSX.utils.json_to_sheet(certData);
+      XLSX.utils.book_append_sheet(wb, wsCert, 'Certifications');
+    }
+
+    if (options.includeAudits && supplierAudits.length > 0) {
+      const auditsData = supplierAudits.map(a => ({
+        'Audit ID': a.id,
+        'Date': a.date,
+        'Title': a.title,
+        'Status': a.status,
+        'Score': a.score || ''
+      }));
+      const wsAudits = XLSX.utils.json_to_sheet(auditsData);
+      XLSX.utils.book_append_sheet(wb, wsAudits, 'Audits');
+    }
+
+    XLSX.writeFile(wb, `SubSupplier_${record.name.replace(/\s+/g, '_')}.xlsx`);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -64,9 +292,17 @@ export function SubSupplierDetail({ record, onBack, onEdit }: SubSupplierDetailP
             <p className="text-sm font-medium text-slate-500">Supplier ID: {record.id}</p>
           </div>
         </div>
-        <button onClick={onEdit} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm font-bold text-sm transition-colors">
-          <Edit3 className="w-4 h-4" /> Edit Details
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <Download className="w-4 h-4 text-blue-500" /> Export
+          </button>
+          <button onClick={onEdit} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm font-bold text-sm transition-colors">
+            <Edit3 className="w-4 h-4" /> Edit Details
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:p-6">
@@ -145,46 +381,6 @@ export function SubSupplierDetail({ record, onBack, onEdit }: SubSupplierDetailP
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">Notes & Remarks</h3>
               <p className="text-sm text-slate-700 bg-slate-50 p-4 rounded-lg border border-slate-100 whitespace-pre-wrap">{record.notes}</p>
-            </div>
-          )}
-
-          {record.orders && record.orders.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2 flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-blue-600" /> Associated Orders
-              </h3>
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Order ID</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Style No</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Quantity</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Delivery Date</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {record.orders.map(order => (
-                      <tr key={order.orderId} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-3 font-bold text-blue-600">{order.orderId}</td>
-                        <td className="px-4 py-3 text-slate-700 font-medium">{order.styleNo}</td>
-                        <td className="px-4 py-3 text-slate-700">{order.quantity.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-slate-500">{order.deliveryDate}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${getOrderStatusColor(order.status)}`}>
-                            {order.status === 'Completed' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                            {order.status === 'In Progress' && <Clock className="w-3.5 h-3.5" />}
-                            {order.status === 'Delayed' && <Clock className="w-3.5 h-3.5" />}
-                            {order.status === 'Cancelled' && <XCircle className="w-3.5 h-3.5" />}
-                            {order.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
         </div>
@@ -287,6 +483,41 @@ export function SubSupplierDetail({ record, onBack, onEdit }: SubSupplierDetailP
           </div>
         </div>
       </div>
+
+      {/* Audit Trail */}
+      <div className="mx-4 sm:mx-6 mb-6 bg-slate-50 p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden relative">
+         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-bl-full opacity-50 blur-xl"></div>
+         <div className="relative z-10 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200">
+               <History className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">Audit Trail</h3>
+               <p className="text-xs text-slate-500 font-medium">System tracking for this record</p>
+            </div>
+         </div>
+         <div className="relative z-10 flex flex-col sm:flex-row gap-4 sm:gap-8">
+            <div>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Created By</p>
+               <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-slate-400" /> {record.createdBy || 'System Admin'}</p>
+               <p className="text-xs text-slate-500 mt-0.5">{record.createdAt ? new Date(record.createdAt).toLocaleString() : record.joinDate || '-'}</p>
+            </div>
+            <div className="hidden sm:block w-px bg-slate-200 h-10 my-auto"></div>
+            <div>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Last Edited By</p>
+               <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5"><Edit3 className="w-3.5 h-3.5 text-slate-400" /> {record.lastEditedBy || 'System Admin'}</p>
+               <p className="text-xs text-slate-500 mt-0.5">{record.lastEditedAt ? new Date(record.lastEditedAt).toLocaleString() : '-'}</p>
+            </div>
+         </div>
+      </div>
+
+      {showExportModal && (
+         <ExportModal 
+           onClose={() => setShowExportModal(false)} 
+           onExportPDF={handleExportPDF} 
+           onExportCSV={handleExportCSV} 
+         />
+      )}
     </div>
   );
 }

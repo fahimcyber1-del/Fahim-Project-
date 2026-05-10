@@ -5,7 +5,7 @@ export function SystemStatusSettings() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   
-  // Simulated metrics state
+  // System metrics state
   const [metrics, setMetrics] = useState({
     cpu: 24,
     memory: { used: 12.4, total: 32 },
@@ -15,7 +15,8 @@ export function SystemStatusSettings() {
     ioWait: 2.4,
     usersOnline: 1248,
     activeSessions: 1450,
-    apiRequests: 450
+    apiRequests: 450,
+    uptime: 0
   });
 
   const [services, setServices] = useState([
@@ -26,44 +27,52 @@ export function SystemStatusSettings() {
     { name: 'Email Gateway', status: 'operational', uptime: '99.90%', latency: 150 },
   ]);
 
-  const refreshAction = () => {
+  const refreshAction = async () => {
     setIsRefreshing(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Generate some variance
-      const variance = (val: number, range: number) => {
-        const change = (Math.random() - 0.5) * range;
-        return Math.max(0, val + change);
-      };
-
-      setMetrics(prev => ({
-        cpu: Math.min(100, Math.round(variance(prev.cpu, 15))),
-        memory: { used: Number(variance(prev.memory.used, 2).toFixed(1)), total: prev.memory.total },
-        dbConnections: Math.round(variance(prev.dbConnections, 30)),
-        dbLatency: Math.round(variance(prev.dbLatency, 5)),
-        diskSpace: { used: Math.min(1000, Number(variance(prev.diskSpace.used, 1).toFixed(1))), total: prev.diskSpace.total },
-        ioWait: Number(variance(prev.ioWait, 1).toFixed(1)),
-        usersOnline: Math.round(variance(prev.usersOnline, 50)),
-        activeSessions: Math.round(variance(prev.activeSessions, 60)),
-        apiRequests: Math.round(variance(prev.apiRequests, 100))
-      }));
-
-      setServices(prev => prev.map(s => ({
-        ...s,
-        latency: Math.max(5, Math.round(variance(s.latency, s.latency * 0.2)))
-      })));
-
-      setLastUpdated(new Date());
+    try {
+      const response = await fetch('/api/system');
+      if (response.ok) {
+        const data = await response.json();
+        setMetrics({
+          cpu: data.cpu,
+          memory: data.memory,
+          dbConnections: data.dbConnections,
+          dbLatency: data.dbLatency,
+          diskSpace: data.diskSpace,
+          ioWait: data.ioWait,
+          usersOnline: data.usersOnline,
+          activeSessions: data.activeSessions,
+          apiRequests: data.apiRequests,
+          uptime: data.uptime || 0
+        });
+        if (data.services) {
+          setServices(data.services);
+        }
+        setLastUpdated(new Date());
+      }
+    } catch (error) {
+      console.error("Failed to fetch system metrics", error);
+    } finally {
       setIsRefreshing(false);
-    }, 800);
+    }
   };
 
   useEffect(() => {
+    refreshAction();
     // Auto refresh every 10 seconds to make it look alive
     const interval = setInterval(refreshAction, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / (3600 * 24));
+    const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (days > 0) return `${days}d ${hours}h ${mins}m`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m ${Math.floor(seconds % 60)}s`;
+  };
 
   return (
     <div className="p-6 lg:p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-8">
@@ -98,9 +107,12 @@ export function SystemStatusSettings() {
               <Server className="w-4 h-4 text-indigo-500" />
               Server Load
             </h3>
-            <span className={`text-xs font-bold px-2 py-1 rounded ${metrics.cpu > 80 ? 'text-rose-600 bg-rose-50' : 'text-indigo-600 bg-indigo-50'}`}>
-              {metrics.cpu > 80 ? 'High' : 'Normal'}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-medium whitespace-nowrap hidden sm:block">Up: {formatUptime(metrics.uptime)}</span>
+              <span className={`text-xs font-bold px-2 py-1 rounded ${metrics.cpu > 80 ? 'text-rose-600 bg-rose-50' : 'text-indigo-600 bg-indigo-50'}`}>
+                {metrics.cpu > 80 ? 'High' : 'Normal'}
+              </span>
+            </div>
           </div>
           <div className="space-y-4">
             <div>

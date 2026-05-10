@@ -5,7 +5,8 @@ import { SubSuppliersDashboard } from './SubSuppliersDashboard';
 import { SubSuppliersList } from './SubSuppliersList';
 import { SubSupplierForm } from './SubSupplierForm';
 import { SubSupplierDetail } from './SubSupplierDetail';
-import { LayoutDashboard, Truck, PlusCircle } from 'lucide-react';
+import { ManageCategories } from './ManageCategories';
+import { LayoutDashboard, Truck, PlusCircle, Tags } from 'lucide-react';
 
 export function SubSuppliersModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: 'dashboard' });
@@ -46,6 +47,12 @@ export function SubSuppliersModule() {
         <Truck className="w-4 h-4" /> All Suppliers
       </button>
       <button
+        onClick={() => setViewState({ type: 'manage-categories' })}
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'manage-categories' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+      >
+        <Tags className="w-4 h-4" /> Manage Categories
+      </button>
+      <button
         onClick={() => setViewState({ type: 'form' })}
         className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'form' && !viewState.recordId ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
       >
@@ -69,12 +76,19 @@ export function SubSuppliersModule() {
             onNew={() => setViewState({ type: 'form' })}
           />
         )}
+        {viewState.type === 'manage-categories' && (
+          <ManageCategories
+            onBack={() => setViewState({ type: 'list' })}
+            onNewSupplier={() => setViewState({ type: 'form' })}
+          />
+        )}
         {viewState.type === 'form' && (
           <div className="h-full">
             <SubSupplierForm 
               initialData={currentRecord}
               onSave={handleSave}
               onCancel={() => setViewState({ type: 'list' })}
+              onManageCategories={() => setViewState({ type: 'manage-categories' })}
             />
           </div>
         )}

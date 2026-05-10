@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DefectItem } from './types';
-import { Download, Edit3, CheckCircle, XCircle, ArrowLeft, Link2, ShieldCheck, Search, Activity, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { Download, Edit3, CheckCircle, XCircle, ArrowLeft, Link2, ShieldCheck, Search, Activity, FileText, Image as ImageIcon, X, History } from 'lucide-react';
+import { DocumentViewerModal } from '../common/DocumentViewerModal';
+import { ExportModal, DefectExportOptions } from './ExportModal';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface DefectDetailProps {
   record: DefectItem;
@@ -10,34 +15,72 @@ interface DefectDetailProps {
 
 export function DefectDetail({ record, onEdit, onBack }: DefectDetailProps) {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  const downloadImage = (url: string, name: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  useEffect(() => {
+    window.dispatchEvent(new Event('app-fullscreen'));
+    return () => {
+      window.dispatchEvent(new Event('app-exit-fullscreen'));
+    };
+  }, []);
+
+  const handleExportPDF = (options: DefectExportOptions) => {
+    const doc = new jsPDF();
+    doc.text(`Defect Library Report: ${record.code}`, 14, 15);
+    
+    autoTable(doc, {
+      startY: 20,
+      head: [['Code', 'Name', 'Category', 'Severity', 'Status']],
+      body: [[
+        record.code, 
+        record.name,
+        record.category, 
+        record.severity,
+        record.status
+      ]],
+    });
+    
+    doc.save(`Defect_${record.code}.pdf`);
+  };
+
+  const handleExportExcel = (options: DefectExportOptions) => {
+    const baseRow: any = {
+      'Defect ID': record.id,
+      Code: record.code,
+      Name: record.name,
+      Category: record.category,
+      Severity: record.severity,
+      Status: record.status,
+      'Impacted Departments': record.impactedDepartments?.join(', '),
+      'Standard Ref': record.qualityStandardRef,
+      'SOP Link': record.sopLink,
+    };
+    
+    if (options.includeRootCause) {
+      baseRow['Root Cause'] = record.rootCauseAnalysis?.map(rc => `${rc.step}: ${rc.description}`).join(' | ') || '';
+    }
+    if (options.includeResolution) {
+      baseRow['Corrective Action'] = record.correctiveAction || '';
+      baseRow['Preventive Action'] = record.preventiveAction || '';
+    }
+    if (options.includeAcceptanceCriteria) {
+      baseRow['Acceptance Criteria'] = record.acceptanceCriteria || '';
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet([baseRow]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Defect Details');
+    XLSX.writeFile(workbook, `Defect_${record.code}.xlsx`);
   };
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col h-full space-y-6 pb-12">
+    <div className="max-w-6xl mx-auto flex flex-col h-full space-y-6 pb-12 p-4 sm:p-6 lg:p-8">
       {fullscreenImage && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
-          <div className="absolute top-4 right-4 flex gap-4">
-            <button 
-              onClick={() => downloadImage(fullscreenImage, 'defect-image')}
-              className="text-white hover:text-blue-400 bg-white/10 p-2 rounded-full transition"
-              title="Download Image"
-            >
-              <Download className="w-6 h-6" />
-            </button>
-            <button onClick={() => setFullscreenImage(null)} className="text-white hover:text-red-400 bg-white/10 p-2 rounded-full transition">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          <img src={fullscreenImage} alt="Expanded view" className="max-w-full max-h-[90vh] object-contain rounded" />
-        </div>
+        <DocumentViewerModal
+          type="image"
+          content={fullscreenImage}
+          onClose={() => setFullscreenImage(null)}
+        />
       )}
 
       <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors w-fit font-semibold text-sm">
@@ -68,8 +111,11 @@ export function DefectDetail({ record, onEdit, onBack }: DefectDetailProps) {
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 font-semibold rounded-lg text-sm shadow-sm transition-colors">
-            <Download className="w-4 h-4" /> Export PDF
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 font-semibold rounded-lg text-sm shadow-sm transition-colors"
+          >
+            <Download className="w-4 h-4" /> Export
           </button>
           <button onClick={() => onEdit(record.id)} className="flex items-center gap-2 px-6 py-2 bg-blue-700 text-white font-bold rounded-lg shadow-sm hover:bg-blue-800 transition-colors">
             <Edit3 className="w-4 h-4" /> Edit Record
@@ -257,8 +303,43 @@ export function DefectDetail({ record, onEdit, onBack }: DefectDetailProps) {
             </div>
           </div>
 
+          {/* Audit Trail */}
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
+            <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <History className="w-4 h-4 text-slate-400" /> Audit Trail
+            </h3>
+            <div className="space-y-4">
+              {record.auditTrail && record.auditTrail.length > 0 ? (
+                <div className="relative border-l-2 border-slate-100 ml-3 space-y-6">
+                  {record.auditTrail.map((log, index) => (
+                    <div key={index} className="relative pl-5">
+                      <div className="absolute w-2.5 h-2.5 bg-blue-400 rounded-full -left-[6px] top-1.5 ring-4 ring-white" />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-400">{log.date}</span>
+                        <span className="text-sm font-semibold text-slate-800">{log.action} by {log.user}</span>
+                        {log.details && (
+                          <span className="text-sm text-slate-600 mt-0.5">{log.details}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500 italic">No audit history available.</p>
+              )}
+            </div>
+          </div>
+
         </div>
       </div>
+      
+      {showExportModal && (
+        <ExportModal 
+          onClose={() => setShowExportModal(false)}
+          onExportPDF={handleExportPDF}
+          onExportCSV={handleExportExcel}
+        />
+      )}
     </div>
   );
 }

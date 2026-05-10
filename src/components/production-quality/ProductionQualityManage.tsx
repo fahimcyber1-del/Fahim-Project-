@@ -38,7 +38,9 @@ function ManageGroup({ title, items, setItems }: { title: string, items: string[
   };
 
   const removeItem = (item: string) => {
-    setItems(items.filter(i => i !== item));
+    if (window.confirm(`Are you sure you want to delete this ${title.slice(0, -1)}?`)) {
+      setItems(items.filter(i => i !== item));
+    }
   };
 
   return (

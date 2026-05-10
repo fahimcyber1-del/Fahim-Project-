@@ -1,5 +1,5 @@
 import { useApiStorage } from '../../hooks/useApiData';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DefectItem, ViewState } from './types';
 import { INITIAL_DEFECTS } from './mockData';
 import { DefectDashboard } from './DefectDashboard';
@@ -15,6 +15,20 @@ export function DefectLibraryModule() {
   const [categories, setCategories] = useState<string[]>(['Stitching', 'Fabric', 'Measurement', 'Finishing', 'Knitting', 'Color', 'Others']);
   const [departments, setDepartments] = useState<string[]>(['Sewing', 'Cutting', 'Finishing', 'Knitting', 'Warehousing']);
   const [standards, setStandards] = useState<string[]>(['ASTM-D3990', 'ISO-9001', 'AQL-1.5', 'AQL-2.5']);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreen = () => setIsFullscreen(true);
+    const handleExitFullscreen = () => setIsFullscreen(false);
+    
+    window.addEventListener('app-fullscreen', handleFullscreen);
+    window.addEventListener('app-exit-fullscreen', handleExitFullscreen);
+    
+    return () => {
+      window.removeEventListener('app-fullscreen', handleFullscreen);
+      window.removeEventListener('app-exit-fullscreen', handleExitFullscreen);
+    };
+  }, []);
 
   const handleCreate = () => {
     setViewState({ type: 'form' });
@@ -74,10 +88,10 @@ export function DefectLibraryModule() {
   );
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {renderNav()}
+    <div className={`w-full h-full flex flex-col ${isFullscreen ? "bg-slate-50" : "p-4 sm:p-6 lg:p-8 bg-slate-50/50"}`}>
+      {!isFullscreen && renderNav()}
       
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className={`flex-1 overflow-y-auto w-full ${isFullscreen ? "h-full" : ""}`}>
         {viewState.type === 'dashboard' && (
           <DefectDashboard 
             records={records} 

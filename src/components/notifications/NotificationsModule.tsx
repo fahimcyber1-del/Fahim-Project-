@@ -33,7 +33,9 @@ export function NotificationsModule() {
   };
   
   const handleDelete = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    if (window.confirm("Are you sure you want to delete this notification?")) {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }
   };
 
   const filteredNotifications = notifications.filter(n => {

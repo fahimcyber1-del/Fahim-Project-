@@ -108,7 +108,7 @@ export function DocumentList({ records, onView, onEdit, onDelete, onNew }: Docum
                     <button onClick={() => onEdit(record.id)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors" title="Edit">
                       <Edit3 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => onDelete(record.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-md transition-colors" title="Delete">
+                    <button onClick={() => { if(window.confirm('Are you sure you want to delete this document?')) onDelete(record.id); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-md transition-colors" title="Delete">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

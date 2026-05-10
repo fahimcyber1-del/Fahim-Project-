@@ -74,9 +74,7 @@ export function useApiStorage<T>(key: string, initialData: T[]): [T[], (newData:
   const [data, setLocalData] = useState<T[]>(initialData);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
+  const loadData = () => {
     apiFetch<any>(key)
       .then(json => {
         if (Array.isArray(json) && json.length > 0 && json[0].id === 'singleton' && json[0].collection) {
@@ -96,6 +94,24 @@ export function useApiStorage<T>(key: string, initialData: T[]): [T[], (newData:
         }
         setIsLoaded(true);
       });
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    loadData();
+
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (!customEvent.detail || customEvent.detail.key === key) {
+         const stored = apiStorage.getItem(key);
+         if (stored) {
+             try { setLocalData(JSON.parse(stored)); } catch { }
+         }
+      }
+    };
+    
+    window.addEventListener('app-storage-sync', handleSync);
+    return () => window.removeEventListener('app-storage-sync', handleSync);
   }, [key]);
 
   const setData = useCallback((newData: T[] | ((prev: T[]) => T[])) => {

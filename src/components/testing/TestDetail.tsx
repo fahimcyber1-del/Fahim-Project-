@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TestRequest } from './types';
-import { ArrowLeft, Share2, Download, Clock, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Share2, Download, Clock, ShieldCheck, CheckCircle2, Maximize2 } from 'lucide-react';
+import { DocumentViewerModal } from '../common/DocumentViewerModal';
 
 interface TestDetailProps {
   record: TestRequest;
@@ -9,8 +10,18 @@ interface TestDetailProps {
 }
 
 export function TestDetail({ record, onBack, onEdit }: TestDetailProps) {
+  const [fullscreenImage, setFullscreenImage] = useState<{ content: string; name: string } | null>(null);
+
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto flex flex-col h-full space-y-6">
+      {fullscreenImage && (
+        <DocumentViewerModal
+          type="image"
+          content={fullscreenImage.content}
+          name={fullscreenImage.name}
+          onClose={() => setFullscreenImage(null)}
+        />
+      )}
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
@@ -164,7 +175,12 @@ export function TestDetail({ record, onBack, onEdit }: TestDetailProps) {
             <div className="grid grid-cols-2 gap-4">
                <div>
                   {record.specimenImages?.preTest ? (
-                     <img src={record.specimenImages.preTest} alt="Pre-test" className="w-full h-32 object-cover border border-slate-200" />
+                     <div className="relative group cursor-pointer" onClick={() => setFullscreenImage({ content: record.specimenImages.preTest, name: 'Pre-Test Specimen' })}>
+                       <img src={record.specimenImages.preTest} alt="Pre-test" className="w-full h-32 object-cover border border-slate-200" />
+                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <Maximize2 className="w-6 h-6 text-white" />
+                       </div>
+                     </div>
                   ) : (
                      <div className="w-full h-32 bg-[#0A192F] border border-slate-200"></div>
                   )}
@@ -172,7 +188,12 @@ export function TestDetail({ record, onBack, onEdit }: TestDetailProps) {
                </div>
                <div>
                   {record.specimenImages?.postTest ? (
-                     <img src={record.specimenImages.postTest} alt="Post-test" className="w-full h-32 object-cover border border-slate-200" />
+                     <div className="relative group cursor-pointer" onClick={() => setFullscreenImage({ content: record.specimenImages.postTest, name: 'Post-Test Specimen' })}>
+                       <img src={record.specimenImages.postTest} alt="Post-test" className="w-full h-32 object-cover border border-slate-200" />
+                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <Maximize2 className="w-6 h-6 text-white" />
+                       </div>
+                     </div>
                   ) : (
                      <div className="w-full h-32 bg-[#0A192F] border border-slate-200 opacity-90"></div>
                   )}

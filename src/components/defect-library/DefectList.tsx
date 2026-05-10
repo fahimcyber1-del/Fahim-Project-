@@ -4,6 +4,7 @@ import { Search, Plus, Download, Edit3, Trash2, Filter, FileText, ChevronDown, C
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { ExportModal, DefectExportOptions } from './ExportModal';
 
 interface DefectListProps {
   records: DefectItem[];
@@ -19,6 +20,8 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
   const [severityFilter, setSeverityFilter] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportTarget, setExportTarget] = useState<DefectItem[] | null>(null);
   
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -90,7 +93,13 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
     setConfirmDelete({ ids: Array.from(selectedIds), message: `Are you sure you want to delete ${selectedIds.size} records?` });
   };
 
-  const exportPDF = (dataToExport: DefectItem[] = filteredRecords) => {
+  const handleOpenExportModal = (target: DefectItem[] = filteredRecords) => {
+    setExportTarget(target);
+    setShowExportModal(true);
+  };
+
+  const handleExportPDF = (options: DefectExportOptions) => {
+    const dataToExport = exportTarget || filteredRecords;
     const doc = new jsPDF();
     doc.text('Defect Library Report', 14, 15);
     
@@ -109,18 +118,34 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
     doc.save('Defect_Library.pdf');
   };
 
-  const exportExcel = (dataToExport: DefectItem[] = filteredRecords) => {
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(r => ({
-      'Defect ID': r.id,
-      Code: r.code,
-      Name: r.name,
-      Category: r.category,
+  const handleExportExcel = (options: DefectExportOptions) => {
+    const dataToExport = exportTarget || filteredRecords;
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(r => {
+      const baseRow: any = {
+        'Defect ID': r.id,
+        Code: r.code,
+        Name: r.name,
+        Category: r.category,
       Severity: r.severity,
       Status: r.status,
       'Impacted Departments': r.impactedDepartments?.join(', '),
       'Standard Ref': r.qualityStandardRef,
       'SOP Link': r.sopLink,
-    })));
+    };
+    
+    if (options.includeRootCause) {
+      baseRow['Root Cause'] = r.rootCauseAnalysis?.map(rc => `${rc.step}: ${rc.description}`).join(' | ') || '';
+    }
+    if (options.includeResolution) {
+      baseRow['Corrective Action'] = r.correctiveAction || '';
+      baseRow['Preventive Action'] = r.preventiveAction || '';
+    }
+    if (options.includeAcceptanceCriteria) {
+      baseRow['Acceptance Criteria'] = r.acceptanceCriteria || '';
+    }
+
+    return baseRow;
+  }));
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Defects');
     XLSX.writeFile(workbook, 'Defect_Library.xlsx');
@@ -154,16 +179,10 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
                <Filter className="w-4 h-4" /> Filters {isFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button 
-              onClick={() => exportPDF()}
+              onClick={() => handleOpenExportModal()}
               className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded transition-colors shadow-sm"
             >
-              <FileText className="w-4 h-4" /> Export PDF
-            </button>
-            <button 
-              onClick={() => exportExcel()}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded transition-colors shadow-sm"
-            >
-              <Download className="w-4 h-4" /> Export Excel
+              <FileText className="w-4 h-4" /> Export
             </button>
             <button onClick={onCreate} className="flex items-center gap-2 px-4 py-1.5 bg-blue-700 text-white rounded font-semibold text-xs transition-colors shadow-sm hover:bg-blue-800">
                <Plus className="w-4 h-4" /> Register New Defect
@@ -312,11 +331,8 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
                               <button onClick={() => { onEdit(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
                                   <Edit3 className="w-4 h-4" /> Edit
                                 </button>
-                                <button onClick={() => { exportPDF([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                                  <FileText className="w-4 h-4" /> Export PDF
-                                </button>
-                                <button onClick={() => { exportExcel([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                                  <Download className="w-4 h-4" /> Export Excel
+                                <button onClick={() => { handleOpenExportModal([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
+                                  <FileText className="w-4 h-4" /> Export
                                 </button>
                                 <button onClick={() => { setConfirmDelete({ ids: [record.id], message: 'Are you sure you want to delete this defect?' }); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded">
                                   <Trash2 className="w-4 h-4" /> Delete
@@ -364,11 +380,8 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
                          <button onClick={() => { onEdit(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
                             <Edit3 className="w-4 h-4" /> Edit
                          </button>
-                         <button onClick={() => { exportPDF([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                            <FileText className="w-4 h-4" /> Export PDF
-                         </button>
-                         <button onClick={() => { exportExcel([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                            <Download className="w-4 h-4" /> Export Excel
+                         <button onClick={() => { handleOpenExportModal([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
+                            <FileText className="w-4 h-4" /> Export
                          </button>
                          <button onClick={() => { setConfirmDelete({ ids: [record.id], message: 'Are you sure you want to delete this defect?' }); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded">
                             <Trash2 className="w-4 h-4" /> Delete
@@ -467,6 +480,14 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
             </div>
           </div>
         </div>
+      )}
+
+      {showExportModal && (
+        <ExportModal 
+          onClose={() => setShowExportModal(false)}
+          onExportPDF={handleExportPDF}
+          onExportCSV={handleExportExcel}
+        />
       )}
     </div>
   );

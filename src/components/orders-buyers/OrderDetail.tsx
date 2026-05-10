@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Order } from './types';
-import { ArrowLeft, Edit, FileText, Download, User, Calendar, CreditCard, DollarSign, Bookmark, HardHat, Ship, Layers, ClipboardList, X } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Download, User, Calendar, CreditCard, DollarSign, Bookmark, HardHat, Ship, Layers, ClipboardList, X, History } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { ExportModal, OrderExportOptions } from './ExportModal';
+import { DocumentViewerModal } from '../common/DocumentViewerModal';
 
 interface OrderDetailProps {
   order: Order;
@@ -12,39 +15,231 @@ interface OrderDetailProps {
 
 export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
   const [viewModal, setViewModal] = useState<{ type: 'image' | 'pdf', content: string, name?: string } | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  const handleExportPDF = () => {
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: true }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: false }));
+    };
+  }, []);
+
+  const handleExportPDF = (options: OrderExportOptions) => {
     const doc = new jsPDF();
-    doc.text(`Order Report - ${order.poArticleNumber}`, 14, 15);
+    const pageWidth = doc.internal.pageSize.width;
     
-    const tableData = [
-      ['PO/Article Number', order.poArticleNumber],
-      ['Style Number', order.styleNumber],
-      ['Item Name / Description', order.itemName || '-'],
-      ['Buyer', order.buyerName],
-      ['Merchandiser', order.merchandiserName || '-'],
-      ['Order Date', order.orderDate],
-      ['Delivery Date', order.deliveryDate],
-      ['Quantity', order.quantity.toString()],
-      ['Unit Price', `$${order.unitPrice.toFixed(2)}`],
-      ['Total Amount', `$${order.totalAmount.toFixed(2)}`],
-      ['Timeline Status', order.timelineStatus || '-'],
-      ['Status', order.status]
+    // Header
+    doc.setFillColor(79, 70, 229); // indigo-600
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ORDER REPORT', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`PO Number: ${order.poArticleNumber}`, 14, 34);
+
+    let currentY = 50;
+
+    // Reset text color for body
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Order Summary', 14, currentY);
+    currentY += 6;
+
+    const mainTableData = [
+      ['Style Number', order.styleNumber, 'Item Name', order.itemName || '-'],
+      ['Buyer', order.buyerName, 'Merchandiser', order.merchandiserName || '-'],
+      ['Order Date', order.orderDate, 'Delivery Date', order.deliveryDate],
+      ['Quantity', order.quantity.toString(), 'Total Amount', `$${order.totalAmount.toFixed(2)}`],
+      ['Status', order.status, '', '']
     ];
 
     autoTable(doc, {
-      startY: 20,
-      head: [['Field', 'Value']],
-      body: tableData,
+      startY: currentY,
+      body: mainTableData,
+      theme: 'plain',
+      styles: { cellPadding: 3, fontSize: 10 },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+        1: { cellWidth: 55 },
+        2: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+        3: { cellWidth: 55 }
+      }
     });
     
+    currentY = (doc as any).lastAutoTable.finalY + 15;
+
+    if (options.includePODetails && order.poDetails && order.poDetails.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PO Breakdown', 14, currentY);
+      currentY += 6;
+      const poData: string[][] = [];
+      order.poDetails.forEach(po => {
+        po.breakdowns.forEach(bd => {
+           poData.push([po.poArticleNumber, bd.color, bd.size, bd.quantity.toString()]);
+        });
+      });
+      autoTable(doc, {
+        startY: currentY,
+        head: [['PO Number', 'Color', 'Size', 'Quantity']],
+        body: poData,
+        theme: 'striped',
+        headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeBOM && order.bomEntries && order.bomEntries.length > 0) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Bill of Materials (BOM)', 14, currentY);
+      currentY += 6;
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Category', 'Description', 'Consumption', 'Unit Price', 'Total Cost']],
+        body: order.bomEntries.map(b => [b.category, b.itemDescription, `${b.consumption} ${b.uom}`, `$${b.unitPrice.toFixed(2)}`, `$${b.totalCost.toFixed(2)}`]),
+        theme: 'striped',
+        headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeProductionTracking) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Production Tracking', 14, currentY);
+      currentY += 6;
+      
+      const trackingData = [
+         ['Cutting Phase', `Qty: ${order.cuttingQuantity?.toString() || '-'}`, `Dates: ${order.cuttingStartDate||'-'} to ${order.cuttingEndDate||'-'}`],
+         ['Sewing Phase', `Input: ${order.sewingInputQuantity?.toString() || '-'}`, `Complete: ${order.sewingCompleteQuantity?.toString() || '-'}`],
+         ['Finishing/Packing', `Packed: ${order.packingQuantity?.toString() || '-'}`, '']
+      ];
+      autoTable(doc, {
+        startY: currentY,
+        body: trackingData,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 4 },
+        columnStyles: {
+           0: { fontStyle: 'bold', fillColor: [248, 250, 252] }
+        }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeLogistics && order.shipmentMode) {
+      if (currentY > 250) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Logistics Information', 14, currentY);
+      currentY += 6;
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Shipment Mode', 'Vessel / Flight No', 'Port of Loading', 'Port of Discharge']],
+        body: [[order.shipmentMode||'-', order.vesselFlightNo||'-', order.portOfLoading||'-', order.portOfDischarge||'-']],
+        theme: 'striped',
+        headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeProductImage && order.productImage) {
+      if (currentY > 180) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Product Image', 14, currentY);
+      currentY += 10;
+      try {
+        doc.addImage(order.productImage, 'JPEG', 14, currentY, 80, 80);
+        currentY += 90;
+      } catch (e) {
+        console.error("Could not add product image to PDF", e);
+      }
+    }
+
+    // Add footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+    }
+
     doc.save(`Order_${order.poArticleNumber}.pdf`);
   };
 
+  const handleExportCSV = (options: OrderExportOptions) => {
+     // Flatten data for basic CSV
+     const dataToExport = [{
+        'PO Number': order.poArticleNumber,
+        'Buyer': order.buyerName,
+        'Style': order.styleNumber,
+        'Order Date': order.orderDate,
+        'Delivery Date': order.deliveryDate,
+        'Quantity': order.quantity,
+        'Status': order.status,
+        'Created By': order.createdBy || '-',
+        'Created At': order.createdAt || '-',
+        'Last Edited By': order.lastEditedBy || '-',
+        'Last Edited At': order.lastEditedAt || '-'
+     }];
+     
+     const workbook = XLSX.utils.book_new();
+     
+     // Main info
+     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+     XLSX.utils.book_append_sheet(workbook, worksheet, 'Order Info');
+
+     // PO Breakdown
+     if (options.includePODetails && order.poDetails) {
+        const poRows: any[] = [];
+        order.poDetails.forEach(po => po.breakdowns.forEach(bd => {
+           poRows.push({
+             'PO Number': po.poArticleNumber,
+             'Color': bd.color,
+             'Size': bd.size,
+             'Quantity': bd.quantity
+           });
+        }));
+        if (poRows.length > 0) {
+          const wsPo = XLSX.utils.json_to_sheet(poRows);
+          XLSX.utils.book_append_sheet(workbook, wsPo, 'PO Breakdown');
+        }
+     }
+
+     // BOM
+     if (options.includeBOM && order.bomEntries && order.bomEntries.length > 0) {
+       const wsBom = XLSX.utils.json_to_sheet(order.bomEntries.map(b => ({
+         'Category': b.category,
+         'Description': b.itemDescription,
+         'Supplier': b.supplierName,
+         'Consumption': b.consumption,
+         'UOM': b.uom,
+         'Unit Price': b.unitPrice,
+         'Total Cost': b.totalCost
+       })));
+       XLSX.utils.book_append_sheet(workbook, wsBom, 'BOM');
+     }
+
+     XLSX.writeFile(workbook, `Order_${order.poArticleNumber}.xlsx`);
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col h-full bg-slate-50">
+    <div className="w-full bg-slate-50 min-h-full">
       {/* Header */}
-      <div className="flex-none p-4 sm:p-6 pb-4 bg-white border-b border-slate-200">
+      <div className="p-4 sm:p-6 pb-4 bg-white border-b border-slate-200">
         <button 
           type="button"
           onClick={onBack}
@@ -73,10 +268,10 @@ export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button 
-              onClick={handleExportPDF}
+              onClick={() => setShowExportModal(true)}
               className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
             >
-              <FileText className="w-4 h-4 text-rose-500" /> Export PDF
+              <Download className="w-4 h-4 text-indigo-500" /> Export
             </button>
             <button 
               onClick={() => onEdit(order)}
@@ -89,7 +284,7 @@ export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 min-h-0 focus:outline-none">
+      <div className="p-4 sm:p-6">
         <div className="max-w-7xl mx-auto space-y-6 pb-12">
           
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:p-6">
@@ -246,6 +441,10 @@ export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
                              <div className="flex flex-col">
                                 <span className="text-[10px] font-bold uppercase text-rose-600/70 mb-0.5">Item Name</span>
                                 <span className="font-bold text-rose-950 truncate line-clamp-1" title={order.accessoriesItemName || '-'}>{order.accessoriesItemName || '-'}</span>
+                             </div>
+                             <div className="flex flex-col">
+                                <span className="text-[10px] font-bold uppercase text-rose-600/70 mb-0.5">Quantity</span>
+                                <span className="font-bold text-rose-950">{order.accessoriesQuantity || '-'}</span>
                              </div>
                              <div className="flex flex-col">
                                 <span className="text-[10px] font-bold uppercase text-rose-600/70 mb-0.5">Inhouse Date</span>
@@ -433,6 +632,33 @@ export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
                     )}
                  </div>
 
+                 {/* Audit Trail */}
+                 <div className="bg-slate-50 p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100 rounded-bl-full opacity-50 blur-xl"></div>
+                    <div className="relative z-10 flex items-center gap-3">
+                       <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
+                          <History className="w-5 h-5 text-indigo-600" />
+                       </div>
+                       <div>
+                          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">Audit Trail</h3>
+                          <p className="text-xs text-slate-500 font-medium">System tracking for this record</p>
+                       </div>
+                    </div>
+                    <div className="relative z-10 flex flex-col sm:flex-row gap-4 sm:gap-8">
+                       <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Created By</p>
+                          <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-slate-400" /> {order.createdBy || '-'}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{order.createdAt || '-'}</p>
+                       </div>
+                       <div className="hidden sm:block w-px bg-slate-200 h-10 my-auto"></div>
+                       <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Last Edited By</p>
+                          <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5"><Edit className="w-3.5 h-3.5 text-slate-400" /> {order.lastEditedBy || '-'}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{order.lastEditedAt || '-'}</p>
+                       </div>
+                    </div>
+                 </div>
+
             </div>
           </div>
         </div>
@@ -440,49 +666,21 @@ export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
 
       {/* Viewer Modal */}
       {viewModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/80 backdrop-blur-sm">
-            <div className="relative w-full max-w-5xl h-full max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-slate-900/10">
-               <div className="flex items-center justify-between p-4 px-6 border-b border-slate-200 bg-slate-50">
-                  <h3 className="font-extrabold text-slate-900 flex items-center gap-2">
-                    {viewModal.type === 'image' ? <Bookmark className="w-5 h-5 text-indigo-500" /> : <FileText className="w-5 h-5 text-indigo-500" />}
-                    {viewModal.type === 'image' ? 'Product Image' : 'Document Viewer'}
-                  </h3>
-                  <button onClick={() => setViewModal(null)} className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors bg-white border border-slate-200 shadow-sm">
-                    <X className="w-5 h-5" />
-                  </button>
-               </div>
-               <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-100">
-                  {viewModal.type === 'image' && (
-                    <img src={viewModal.content} alt="Preview" className="max-w-full max-h-[80vh] object-contain shadow-md rounded-xl bg-white p-2" />
-                  )}
-                  {viewModal.type === 'pdf' && (
-                    viewModal.content.startsWith('data:application/pdf') || viewModal.content.startsWith('http') || viewModal.content.startsWith('blob:') ? (
-                      <div className="w-full h-full flex flex-col">
-                         <object data={viewModal.content} type="application/pdf" className="flex-1 w-full rounded-xl border-2 border-slate-200 bg-white shadow-sm overflow-hidden min-h-0">
-                           <embed src={viewModal.content} type="application/pdf" className="w-full h-full" />
-                         </object>
-                         <div className="mt-4 flex justify-end">
-                           <a href={viewModal.content} download={viewModal.name || 'document.pdf'} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors font-bold shadow-sm">
-                             <Download className="w-4 h-4" /> Download PDF
-                           </a>
-                         </div>
-                      </div>
-                    ) : (
-                      <div className="text-center p-12 bg-white rounded-2xl shadow-sm w-full max-w-md border border-slate-200">
-                        <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                           <FileText className="w-10 h-10 text-indigo-400" />
-                        </div>
-                        <p className="text-lg font-black text-slate-900 mb-2">Preview not available</p>
-                        <p className="text-sm font-medium text-slate-500 mb-6 truncate px-4">{viewModal.name || viewModal.content}</p>
-                        <a href={viewModal.content} download={viewModal.name || viewModal.content} className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors font-bold text-sm shadow-sm w-full">
-                           <Download className="w-4 h-4" /> Download File Instead
-                        </a>
-                      </div>
-                    )
-                  )}
-               </div>
-            </div>
-         </div>
+        <DocumentViewerModal
+          type={viewModal.type}
+          content={viewModal.content}
+          name={viewModal.name}
+          onClose={() => setViewModal(null)}
+        />
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+         <ExportModal 
+           onClose={() => setShowExportModal(false)} 
+           onExportPDF={handleExportPDF} 
+           onExportCSV={handleExportCSV} 
+         />
       )}
     </div>
   );

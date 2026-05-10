@@ -143,6 +143,7 @@ export function CustomerComplaintsList({ records, onView, onEdit, onDelete, onNe
   };
 
   const handleDeleteSelected = () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.size} records?`)) return;
     onDelete(Array.from(selectedIds));
     setSelectedIds(new Set());
   };
@@ -366,7 +367,7 @@ export function CustomerComplaintsList({ records, onView, onEdit, onDelete, onNe
                                <button onClick={(e) => { e.stopPropagation(); handleExportExcel([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
                                   <Download className="w-4 h-4" /> Export Excel
                                </button>
-                               <button onClick={(e) => { e.stopPropagation(); onDelete(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded text-left">
+                               <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Are you sure you want to delete this record?')) onDelete(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded text-left">
                                   <Trash2 className="w-4 h-4" /> Delete
                                </button>
                             </div>

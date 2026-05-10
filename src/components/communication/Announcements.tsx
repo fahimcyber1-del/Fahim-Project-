@@ -234,7 +234,7 @@ export function Announcements() {
         {announcements.map((announcement) => (
           <div key={announcement.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative group">
             {currentUser?.role === 'Super Admin' && (
-              <button onClick={() => handleDelete(announcement.id)} className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded opacity-0 group-hover:opacity-100 transition-all">
+              <button onClick={() => { if(window.confirm('Are you sure you want to delete this announcement?')) handleDelete(announcement.id); }} className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded opacity-0 group-hover:opacity-100 transition-all">
                 <X className="w-4 h-4" />
               </button>
             )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QualityRecord } from './types';
 import { ArrowLeft, Edit, Download, Calendar } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -15,6 +15,13 @@ interface DetailProps {
 export function ProductionQualityDetail({ record, onEdit, onBack }: DetailProps) {
   const [showExportModal, setShowExportModal] = useState(false);
   
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: true }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: false }));
+    };
+  }, []);
+
   const getStatusBadgeColor = (status: string) => {
     switch(status) {
       case 'Passed': return 'bg-emerald-100 text-emerald-700 border-emerald-200';

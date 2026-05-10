@@ -23,7 +23,12 @@ export const INITIAL_DEFECTS: DefectItem[] = [
     passReferenceImages: ['https://images.unsplash.com/photo-1588147570417-7cdb224151fb?auto=format&fit=crop&q=80&w=400'],
     failCriteriaImages: ['https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&q=80&w=400'],
     lastUpdatedBy: 'Sarah Connor',
-    lastUpdatedDate: '2 hours ago'
+    lastUpdatedDate: '2 hours ago',
+    auditTrail: [
+      { date: '2023-10-25 14:30', user: 'Sarah Connor', action: 'Update', details: 'Added new failing criteria images' },
+      { date: '2023-09-12 09:15', user: 'Michael T.', action: 'Review', details: 'Approved revision v2.4' },
+      { date: '2023-04-05 11:00', user: 'System', action: 'Create', details: 'Initial import from old system' }
+    ]
   },
   {
     id: 'DEF-002',

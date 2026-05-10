@@ -88,22 +88,33 @@ export function BuyersList({ buyers, orders, onSave, onDelete }: BuyersListProps
     return orders.filter(o => o.buyerId === buyerId).reduce((sum, o) => sum + o.quantity, 0);
   };
 
+  const totalOrdersPerBuyer = (buyerId: string) => {
+    return orders.filter(o => o.buyerId === buyerId).length;
+  };
+
+  const totalSystemOrdersCount = orders.length;
+  
+  const orderPercentage = (buyerId: string) => {
+    if (totalSystemOrdersCount === 0) return '0.0';
+    return ((totalOrdersPerBuyer(buyerId) / totalSystemOrdersCount) * 100).toFixed(1);
+  };
+
   const exportPDF = (dataToExport: Buyer[] = filteredBuyers) => {
     const doc = new jsPDF();
     doc.text('Buyers Report', 14, 15);
     
     autoTable(doc, {
       startY: 20,
-      head: [['ID', 'Name', 'Country', 'Contact', 'Merchandiser', 'Email', 'Status', 'Orders', 'Total Pcs']],
+      head: [['ID', 'Name', 'Country', 'Contact', 'Merchandiser', 'Status', 'Orders', 'Order %', 'Total Pcs']],
       body: dataToExport.map(r => [
         r.id, 
         r.name,
         r.country, 
         r.contactPerson,
         r.merchandiserName || '',
-        r.email, 
         r.status,
-        r.totalOrders.toString(),
+        totalOrdersPerBuyer(r.id).toString(),
+        `${orderPercentage(r.id)}%`,
         totalQuantityPerBuyer(r.id).toLocaleString()
       ]),
     });
@@ -121,7 +132,8 @@ export function BuyersList({ buyers, orders, onSave, onDelete }: BuyersListProps
       Email: r.email,
       Phone: r.phone,
       Status: r.status,
-      Orders: r.totalOrders,
+      Orders: totalOrdersPerBuyer(r.id),
+      'Order %': `${orderPercentage(r.id)}%`,
       'Total Pcs': totalQuantityPerBuyer(r.id)
     })));
     const workbook = XLSX.utils.book_new();
@@ -275,6 +287,7 @@ export function BuyersList({ buyers, orders, onSave, onDelete }: BuyersListProps
                 <th className="px-4 py-3 font-semibold text-slate-600">Merchandiser</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 text-center">Status</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 text-right">Orders</th>
+                <th className="px-4 py-3 font-semibold text-slate-600 text-right">Order %</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 text-right">Total Pcs</th>
                 <th className="px-4 py-3 font-semibold text-slate-600 text-right">Actions</th>
               </tr>
@@ -319,7 +332,8 @@ export function BuyersList({ buyers, orders, onSave, onDelete }: BuyersListProps
                           {buyer.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-700">{buyer.totalOrders}</td>
+                      <td className="px-4 py-3 text-right font-medium text-slate-700">{totalOrdersPerBuyer(buyer.id)}</td>
+                      <td className="px-4 py-3 text-right font-medium text-blue-600 bg-blue-50/50">{orderPercentage(buyer.id)}%</td>
                       <td className="px-4 py-3 text-right font-medium text-slate-700">{totalQuantityPerBuyer(buyer.id).toLocaleString()}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2" ref={openActionMenuId === buyer.id ? menuRef : null}>

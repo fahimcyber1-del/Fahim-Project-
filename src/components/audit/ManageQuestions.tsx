@@ -174,7 +174,7 @@ export function ManageQuestions({ internalQuestions, supplierQuestions, onUpdate
                             <button onClick={() => handleOpenForm(index)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit">
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleDelete(q.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Delete">
+                            <button onClick={() => { if(window.confirm('Are you sure you want to delete this question?')) handleDelete(q.id); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Delete">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -231,7 +231,7 @@ export function ManageQuestions({ internalQuestions, supplierQuestions, onUpdate
                         <td className="px-4 py-3 font-medium text-slate-800">{item}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => handleDeleteDesignation(index)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Delete">
+                            <button onClick={() => { if(window.confirm('Are you sure you want to delete this designation?')) handleDeleteDesignation(index); }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors" title="Delete">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>

@@ -5,10 +5,28 @@ import cors from 'cors';
 import { db } from './src/server/db.js';
 import crudRouter from './src/server/crud.js';
 import notificationsRouter from './src/server/notifications.js';
+import systemMetricsRouter from './src/server/systemMetrics.js';
+
+import { runtimeStats } from './src/server/stats.js';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Track runtime metrics
+  app.use((req, res, next) => {
+    runtimeStats.requestCount++;
+    const ip = req.ip || req.socket.remoteAddress;
+    if (ip) {
+      runtimeStats.activeSessions.add(ip);
+      // Prune randomly (simplified session tracking)
+      if (Math.random() < 0.01) {
+        runtimeStats.activeSessions.clear();
+        runtimeStats.activeSessions.add(ip);
+      }
+    }
+    next();
+  });
 
   app.use(cors());
   app.use(express.json({ limit: '50mb' }));
@@ -21,6 +39,7 @@ async function startServer() {
 
   app.use('/api/data', crudRouter);
   app.use('/api/notifications', notificationsRouter);
+  app.use('/api/system', systemMetricsRouter);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {

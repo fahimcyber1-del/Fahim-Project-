@@ -16,6 +16,13 @@ interface AuditDetailProps {
 export function AuditDetail({ record, onBack }: AuditDetailProps) {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
+  React.useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: true }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: false }));
+    };
+  }, []);
+
   const exportPDF = (options: ExportOptions) => {
     const doc = new jsPDF();
     

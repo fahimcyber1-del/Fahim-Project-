@@ -23,6 +23,14 @@ export interface IncomingQCAttachment {
   type: string;
 }
 
+export interface QualitySignature {
+  id: string;
+  name: string;
+  designation: string;
+  date: string;
+  image?: string;
+}
+
 export interface IncomingQCRecord {
   id: string;
   date: string;
@@ -37,4 +45,6 @@ export interface IncomingQCRecord {
   accessoriesDetails?: AccessoriesDetails;
   notes?: string;
   style?: string; // High level filter
+  documentCode?: string;
+  signatures?: QualitySignature[];
 }

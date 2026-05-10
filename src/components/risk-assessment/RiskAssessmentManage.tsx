@@ -39,8 +39,10 @@ export function RiskAssessmentManage({ records, onView, onEdit, onDelete }: Risk
 
   const handleBulkDelete = () => {
     if (selectedIds.length === 0) return;
-    onDelete(selectedIds);
-    setSelectedIds([]);
+    if (window.confirm('Are you sure you want to delete the selected records?')) {
+      onDelete(selectedIds);
+      setSelectedIds([]);
+    }
   };
 
   const exportToCSV = () => {
@@ -193,7 +195,7 @@ export function RiskAssessmentManage({ records, onView, onEdit, onDelete }: Risk
                       <button onClick={() => onEdit(record.id)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
                         <Edit3 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => onDelete(record.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
+                      <button onClick={() => { if(window.confirm('Are you sure you want to delete this record?')) onDelete(record.id); }} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

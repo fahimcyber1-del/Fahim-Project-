@@ -26,7 +26,9 @@ export function DefectSettings({ categories, departments, standards, onSaveCateg
   };
 
   const handleRemoveCategory = (cat: string) => {
-    setLocalCategories(localCategories.filter(c => c !== cat));
+    if (window.confirm(`Are you sure you want to remove the category "${cat}"?`)) {
+      setLocalCategories(localCategories.filter(c => c !== cat));
+    }
   };
 
   const handleAddDepartment = () => {
@@ -37,7 +39,9 @@ export function DefectSettings({ categories, departments, standards, onSaveCateg
   };
 
   const handleRemoveDepartment = (dept: string) => {
-    setLocalDepartments(localDepartments.filter(d => d !== dept));
+    if (window.confirm(`Are you sure you want to remove the department "${dept}"?`)) {
+      setLocalDepartments(localDepartments.filter(d => d !== dept));
+    }
   };
 
   const handleAddStandard = () => {
@@ -48,7 +52,9 @@ export function DefectSettings({ categories, departments, standards, onSaveCateg
   };
 
   const handleRemoveStandard = (std: string) => {
-    setLocalStandards(localStandards.filter(s => s !== std));
+    if (window.confirm(`Are you sure you want to remove the standard "${std}"?`)) {
+      setLocalStandards(localStandards.filter(s => s !== std));
+    }
   };
 
   const handleSave = () => {

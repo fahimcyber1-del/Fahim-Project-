@@ -54,6 +54,7 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [navigationPayload, setNavigationPayload] = useState<any>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const { settings } = useAppearance();
 
@@ -89,11 +90,17 @@ export default function App() {
       setIsAuthenticated(false);
     };
 
+    const handleFullscreen = (e: CustomEvent) => {
+      setIsFullscreen(!!e.detail);
+    };
+
     window.addEventListener('app-navigate', handleNav as EventListener);
     window.addEventListener('app-logout', handleLogout);
+    window.addEventListener('app-fullscreen', handleFullscreen as EventListener);
     return () => {
       window.removeEventListener('app-navigate', handleNav as EventListener);
       window.removeEventListener('app-logout', handleLogout);
+      window.removeEventListener('app-fullscreen', handleFullscreen as EventListener);
     }
   }, []);
 
@@ -139,7 +146,7 @@ export default function App() {
   return (
     <div className={`flex h-screen w-full text-slate-900 font-sans overflow-hidden select-none ${getBackgroundClass()} ${settings.theme === 'dark' ? 'dark bg-slate-900' : ''}`} style={customBgStyle}>
       {/* Mobile Sidebar Overlay */}
-      {isMobileMenuOpen && (
+      {isMobileMenuOpen && !isFullscreen && (
         <div 
           className="fixed inset-0 z-40 bg-black/20 md:hidden" 
           onClick={() => setIsMobileMenuOpen(false)}
@@ -147,25 +154,29 @@ export default function App() {
       )}
       
       {/* Sidebar - responsive */}
-      <div className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out md:relative md:translate-x-0 shrink-0 ${isSidebarExpanded ? "w-60" : "w-16"}`}>
-        <Sidebar 
-          activeModuleId={activeModuleId} 
-          isExpanded={isSidebarExpanded}
-          onToggleExpand={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          onModuleSelect={(id) => {
-            setActiveModuleId(id);
-            setIsMobileMenuOpen(false);
-          }} 
-        />
-      </div>
+      {!isFullscreen && (
+        <div className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out md:relative md:translate-x-0 shrink-0 ${isSidebarExpanded ? "w-60" : "w-16"}`}>
+          <Sidebar 
+            activeModuleId={activeModuleId} 
+            isExpanded={isSidebarExpanded}
+            onToggleExpand={() => setIsSidebarExpanded(!isSidebarExpanded)}
+            onModuleSelect={(id) => {
+              setActiveModuleId(id);
+              setIsMobileMenuOpen(false);
+            }} 
+          />
+        </div>
+      )}
 
       <div className={`flex flex-1 flex-col overflow-hidden min-w-0 ${settings.layoutMode === 'fixed' ? 'max-w-[1440px] mx-auto w-full shadow-2xl border-x border-slate-200/50 bg-white/90 backdrop-blur-3xl' : (settings.backgroundWallpaper === 'custom' ? 'bg-white/90 backdrop-blur-sm' : '')} ${settings.theme === 'dark' ? 'dark !bg-slate-900/90' : ''}`}>
-        <Header 
-          title={activeModule?.label || "App"} 
-          onMenuToggle={() => setIsMobileMenuOpen(true)} 
-        />
+        {!isFullscreen && (
+          <Header 
+            title={activeModule?.label || "App"} 
+            onMenuToggle={() => setIsMobileMenuOpen(true)} 
+          />
+        )}
         
-        <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 gap-4 md:gap-6 lg:gap-8 overflow-y-auto">
+        <main className={`flex-1 flex flex-col overflow-y-auto ${isFullscreen ? '' : 'p-4 md:p-6 lg:p-8 gap-4 md:gap-6 lg:gap-8'}`}>
           {activeModuleId === "dashboard" ? (
             <Dashboard />
           ) : activeModuleId === "production_quality" ? (

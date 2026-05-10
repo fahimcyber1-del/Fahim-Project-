@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InspectionRecord } from './types';
 import { ArrowLeft, Edit, FileText, Download, Calendar } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -15,6 +15,13 @@ interface DetailProps {
 
 export function InspectionDetail({ record, onEdit, onBack }: DetailProps) {
   const [showExportModal, setShowExportModal] = useState(false);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: true }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: false }));
+    };
+  }, []);
 
   const getStatusBadgeColor = (status: string) => {
     switch(status) {

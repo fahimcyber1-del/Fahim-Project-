@@ -19,6 +19,7 @@ export function OrdersBuyersModule({ navigationPayload, onNavigationHandled }: O
   const [buyers, setBuyers] = useApiStorage('aqm_ordersbuyers_buyers', INITIAL_BUYERS);
   const [orders, setOrders] = useApiStorage('aqm_ordersbuyers_orders', INITIAL_ORDERS);
   const [externalViewOrderId, setExternalViewOrderId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     // Handle external navigation payload passed via props
@@ -49,8 +50,17 @@ export function OrdersBuyersModule({ navigationPayload, onNavigationHandled }: O
         }
       }
     };
+
+    const handleFullscreen = (e: CustomEvent) => {
+      setIsFullscreen(!!e.detail);
+    };
+
     window.addEventListener('app-navigate', handleNav as EventListener);
-    return () => window.removeEventListener('app-navigate', handleNav as EventListener);
+    window.addEventListener('app-fullscreen', handleFullscreen as EventListener);
+    return () => {
+      window.removeEventListener('app-navigate', handleNav as EventListener);
+      window.removeEventListener('app-fullscreen', handleFullscreen as EventListener);
+    };
   }, [navigationPayload, orders, onNavigationHandled]);
 
   // Example handlers for updating state
@@ -103,10 +113,10 @@ export function OrdersBuyersModule({ navigationPayload, onNavigationHandled }: O
   );
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {renderNav()}
+    <div className={`w-full h-full flex flex-col ${isFullscreen ? 'bg-slate-50' : ''}`}>
+      {!isFullscreen && renderNav()}
 
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className={`flex-1 overflow-y-auto w-full ${isFullscreen ? 'h-full' : ''}`}>
         {activeTab === 'dashboard' && (
           <Dashboard buyers={buyers} orders={orders} />
         )}

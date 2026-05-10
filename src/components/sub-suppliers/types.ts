@@ -1,20 +1,12 @@
 export type SupplierStatus = 'Active' | 'Inactive' | 'Pending Approval' | 'Blacklisted';
 export type SupplierRiskLevel = 'Low' | 'Medium' | 'High' | 'Critical';
-export type SupplierCategory = 'Fabric' | 'Trims & Accessories' | 'Packaging' | 'Chemicals' | 'Service' | 'Other';
+export type SupplierCategory = string; // e.g. 'Fabric' | 'Trims & Accessories' | 'Packaging' | 'Chemicals' | 'Service' | 'Other'
 
 export interface SupplierCertification {
   id: string;
   name: string;
   validUntil: string;
   pdfUrl?: string; 
-}
-
-export interface AssociatedOrder {
-  orderId: string;
-  styleNo: string;
-  quantity: number;
-  status: 'In Progress' | 'Completed' | 'Delayed' | 'Cancelled';
-  deliveryDate: string;
 }
 
 export interface SubSupplierRecord {
@@ -33,12 +25,18 @@ export interface SubSupplierRecord {
   website?: string;
   notes?: string;
   joinDate: string;
+  orders?: any[];
   logoUrl?: string;
-  orders?: AssociatedOrder[];
+  documentCode?: string;
+  createdBy?: string;
+  createdAt?: string;
+  lastEditedBy?: string;
+  lastEditedAt?: string;
 }
 
 export type ViewState = 
   | { type: 'dashboard' }
   | { type: 'list' }
+  | { type: 'manage-categories' }
   | { type: 'form'; recordId?: string }
   | { type: 'detail'; recordId: string };

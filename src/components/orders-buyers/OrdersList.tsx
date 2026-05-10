@@ -654,7 +654,27 @@ function OrderForm({ order, buyers, onSave, onCancel }: { order: Order | null, b
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSave(formData as Order);
+      const enhancedData = { ...formData } as Order;
+      
+      let userName = 'Admin User';
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user.name) userName = user.name;
+          else if (user.email) userName = user.email;
+        }
+      } catch (err) {}
+
+      const now = new Date().toLocaleString();
+      enhancedData.lastEditedBy = userName;
+      enhancedData.lastEditedAt = now;
+      if (!order) {
+        enhancedData.createdBy = userName;
+        enhancedData.createdAt = now;
+      }
+
+      onSave(enhancedData);
     }
   };
 
@@ -894,6 +914,10 @@ function OrderForm({ order, buyers, onSave, onCancel }: { order: Order | null, b
                 <div>
                    <label className="block text-xs font-semibold text-slate-600 mb-1">Item Name</label>
                    <input type="text" name="accessoriesItemName" value={formData.accessoriesItemName || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded" />
+                </div>
+                <div>
+                   <label className="block text-xs font-semibold text-slate-600 mb-1">Quantity</label>
+                   <input type="number" name="accessoriesQuantity" value={formData.accessoriesQuantity || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded" />
                 </div>
                 <div>
                    <label className="block text-xs font-semibold text-slate-600 mb-1">Inhouse Date</label>

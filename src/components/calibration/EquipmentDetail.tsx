@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Equipment, CalibrationRecord } from './types';
-import { ArrowLeft, Edit3, CheckCircle, XCircle, Settings, FileText, Download, Calendar, Scale, MapPin, Tag, Plus, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Edit3, CheckCircle, XCircle, Settings, FileText, Download, Calendar, Scale, MapPin, Tag, Plus, PlusCircle, Maximize2 } from 'lucide-react';
+import { DocumentViewerModal } from '../common/DocumentViewerModal';
 
 interface EquipmentDetailProps {
   record: Equipment;
@@ -10,6 +11,7 @@ interface EquipmentDetailProps {
 }
 
 export function EquipmentDetail({ record, onBack, onEdit, onUpdate }: EquipmentDetailProps) {
+  const [fullscreenImage, setFullscreenImage] = useState<{ content: string; name: string } | null>(null);
   const [showCalibrateModal, setShowCalibrateModal] = useState(false);
   const [newLog, setNewLog] = useState<Partial<CalibrationRecord>>({
     date: new Date().toISOString().split('T')[0],
@@ -65,6 +67,14 @@ export function EquipmentDetail({ record, onBack, onEdit, onUpdate }: EquipmentD
 
   return (
     <div className="max-w-6xl mx-auto w-full flex flex-col h-full space-y-6 pb-12">
+      {fullscreenImage && (
+        <DocumentViewerModal
+          type="image"
+          content={fullscreenImage.content}
+          name={fullscreenImage.name}
+          onClose={() => setFullscreenImage(null)}
+        />
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <button 
@@ -97,8 +107,14 @@ export function EquipmentDetail({ record, onBack, onEdit, onUpdate }: EquipmentD
       </div>
 
       {record.imageUrl && (
-        <div className="w-full h-64 rounded-xl overflow-hidden shadow-sm border border-slate-200">
+        <div 
+          className="w-full h-64 rounded-xl overflow-hidden shadow-sm border border-slate-200 relative group cursor-pointer"
+          onClick={() => setFullscreenImage({ content: record.imageUrl!, name: record.name })}
+        >
            <img src={record.imageUrl} alt={record.name} className="w-full h-full object-cover" />
+           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Maximize2 className="w-8 h-8 text-white" />
+           </div>
         </div>
       )}
 

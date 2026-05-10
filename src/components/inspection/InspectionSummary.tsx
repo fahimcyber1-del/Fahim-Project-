@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { ExportModal, InspectionExportOptions } from './ExportModal';
 
 interface SummaryProps {
   records: InspectionRecord[];
@@ -23,6 +24,8 @@ export function InspectionSummary({ records, onView, onEdit, onDelete, onCreate 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportTarget, setExportTarget] = useState<InspectionRecord[] | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ ids: string[] | null, message: string }>({ ids: null, message: '' });
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
@@ -89,21 +92,27 @@ export function InspectionSummary({ records, onView, onEdit, onDelete, onCreate 
     setSelectedIds(newSelect);
   };
 
-  const exportPDF = (dataToExport: InspectionRecord[] = filteredRecords) => {
+  const handleOpenExportModal = (target: InspectionRecord[] = filteredRecords) => {
+    setExportTarget(target);
+    setShowExportModal(true);
+  };
+
+  const handleExportPDF = (options: InspectionExportOptions) => {
+    const dataToExport = exportTarget || filteredRecords;
     const doc = new jsPDF();
     doc.text('Inspection Report', 14, 15);
     
+    // Simplistic PDF export for lists. 
+    // In a real app, options like options.includeChecks would expand the table.
     autoTable(doc, {
       startY: 20,
-      head: [['ID', 'Category', 'Date', 'Style', 'Inspected', 'Short', 'Excess', 'Status']],
+      head: [['ID', 'Category', 'Date', 'Style', 'Inspected', 'Status']],
       body: dataToExport.map(r => [
         r.id, 
         r.category,
         r.date, 
         r.styleNumber,
         r.inspectedQuantity, 
-        r.shortage || 0,
-        r.excess || 0,
         r.status
       ]),
     });
@@ -111,27 +120,40 @@ export function InspectionSummary({ records, onView, onEdit, onDelete, onCreate 
     doc.save('Inspection_Report.pdf');
   };
 
-  const exportExcel = (dataToExport: InspectionRecord[] = filteredRecords) => {
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(r => ({
-      ID: r.id,
-      Category: r.category,
-      Date: r.date,
-      'PO/Article Number': r.poNumber,
-      'Style Number': r.styleNumber,
-      'CRD Date': r.crdDate,
-      Buyer: r.buyer,
-      Color: r.color,
-      Size: r.size,
-      Inspected: r.inspectedQuantity,
-      'Critical Defects': r.criticalDefects,
-      'Major Defects': r.majorDefects,
-      'Minor Defects': r.minorDefects,
-      Shortage: r.shortage,
-      Excess: r.excess,
-      Status: r.status,
-      Inspector: r.inspector,
-      Remarks: r.remarks
-    })));
+  const handleExportExcel = (options: InspectionExportOptions) => {
+    const dataToExport = exportTarget || filteredRecords;
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(r => {
+      const baseRow: any = {
+        ID: r.id,
+        Category: r.category,
+        Date: r.date,
+        'PO/Article Number': r.poNumber,
+        'Style Number': r.styleNumber,
+        'CRD Date': r.crdDate,
+        Buyer: r.buyer,
+        Color: r.color,
+        Size: r.size,
+        Inspected: r.inspectedQuantity,
+        'Critical Defects': r.criticalDefects,
+        'Major Defects': r.majorDefects,
+        'Minor Defects': r.minorDefects,
+        Shortage: r.shortage,
+        Excess: r.excess,
+        Status: r.status,
+        Inspector: r.inspector,
+        Remarks: r.remarks
+      };
+      
+      if (options.includeChecks) {
+        baseRow['Workmanship'] = r.workmanship;
+        baseRow['Measurement'] = r.measurement;
+        baseRow['Product Safety'] = r.productSafety;
+        baseRow['Labeling'] = r.labeling;
+        baseRow['Packing'] = r.packing;
+      }
+      return baseRow;
+    }));
+    
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Inspection Records');
     XLSX.writeFile(workbook, 'Inspection_Report.xlsx');
@@ -162,16 +184,10 @@ export function InspectionSummary({ records, onView, onEdit, onDelete, onCreate 
                <Filter className="w-4 h-4" /> Filters {isFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button 
-              onClick={() => exportPDF()}
+              onClick={() => handleOpenExportModal()}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"
             >
-              <FileText className="w-4 h-4" /> Export PDF
-            </button>
-            <button 
-              onClick={() => exportExcel()}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"
-            >
-              <Download className="w-4 h-4" /> Export Excel
+              <FileText className="w-4 h-4" /> Export
             </button>
             <button 
               onClick={onCreate}
@@ -315,11 +331,8 @@ export function InspectionSummary({ records, onView, onEdit, onDelete, onCreate 
                                 <button onClick={() => { onEdit(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
                                     <Edit className="w-4 h-4" /> Edit
                                 </button>
-                                <button onClick={() => { exportPDF([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                                    <FileText className="w-4 h-4" /> Export PDF
-                                </button>
-                                <button onClick={() => { exportExcel([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                                    <Download className="w-4 h-4" /> Export Excel
+                                <button onClick={() => { handleOpenExportModal([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
+                                    <FileText className="w-4 h-4" /> Export
                                 </button>
                                 <button onClick={() => { setConfirmDelete({ ids: [record.id], message: 'Are you sure you want to delete this record?' }); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded">
                                     <Trash2 className="w-4 h-4" /> Delete
@@ -395,6 +408,13 @@ export function InspectionSummary({ records, onView, onEdit, onDelete, onCreate 
           </div>
         )}
       </div>
+      {showExportModal && (
+        <ExportModal 
+          onClose={() => setShowExportModal(false)}
+          onExportPDF={handleExportPDF}
+          onExportCSV={handleExportExcel}
+        />
+      )}
     </div>
   );
 }

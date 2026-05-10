@@ -35,6 +35,19 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
   const [sigInputDesignation, setSigInputDesignation] = useState('');
   const [sigInputDate, setSigInputDate] = useState(new Date().toISOString().split('T')[0]);
 
+  useEffect(() => {
+    try {
+      const storedProfile = localStorage.getItem('userProfile');
+      if (storedProfile) {
+        const profile = JSON.parse(storedProfile);
+        if (profile.name) setSigInputName(profile.name);
+        if (profile.role) setSigInputDesignation(profile.role);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   const handleClearSignature = () => {
     if (sigPadRef.current) {
       sigPadRef.current.clear();
@@ -379,7 +392,7 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
             <div className="md:col-span-2 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Draw Signature</label>
-                <div className="border border-slate-300 bg-white rounded-lg overflow-hidden flex items-center justify-center relative touch-none" style={{ height: '200px' }}>
+                <div className="border border-slate-300 bg-white rounded-lg overflow-hidden flex items-center justify-center relative touch-none aspect-square w-full max-w-[250px]">
                   <SignatureCanvas 
                     ref={sigPadRef} 
                     canvasProps={{className: 'w-full h-full cursor-crosshair'}} 
@@ -403,30 +416,13 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Designation</label>
-              <select
+              <input
+                type="text"
                 value={sigInputDesignation}
                 onChange={(e) => setSigInputDesignation(e.target.value)}
+                placeholder="e.g. Lead Auditor"
                 className="w-full px-4 py-2 border border-slate-300 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="">Select Designation...</option>
-                {/* Dynamically generated options will be added here based on manage page. For now, pull from local storage if possible */}
-                {(() => {
-                  try {
-                    const saved = localStorage.getItem('audit_designations');
-                    if (saved) {
-                      const list = JSON.parse(saved);
-                      return list.map((item: string, i: number) => <option key={i} value={item}>{item}</option>);
-                    }
-                  } catch (e) {}
-                  return (
-                    <>
-                      <option value="Lead Auditor">Lead Auditor</option>
-                      <option value="Quality Manager">Quality Manager</option>
-                      <option value="Department Head">Department Head</option>
-                    </>
-                  );
-                })()}
-              </select>
+              />
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Signature Date</label>

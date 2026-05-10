@@ -1,8 +1,10 @@
 import { apiStorage } from '../../utils/apiStorage';
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Send, File, Image as ImageIcon, Smile, Phone, Video, Users, Plus, X, UserCircle, Trash2 } from 'lucide-react';
+import { Search, Send, File, Image as ImageIcon, Smile, Phone, Video, Users, Plus, X, UserCircle, Trash2, Maximize2 } from 'lucide-react';
+import { DocumentViewerModal } from '../common/DocumentViewerModal';
 
 export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
+  const [fullscreenImage, setFullscreenImage] = useState<{ content: string; name?: string } | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
@@ -272,6 +274,14 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
 
   return (
     <div className="flex h-full bg-white relative">
+      {fullscreenImage && (
+        <DocumentViewerModal
+          type="image"
+          content={fullscreenImage.content}
+          name={fullscreenImage.name}
+          onClose={() => setFullscreenImage(null)}
+        />
+      )}
       {/* Sidebar - Conversations List */}
       <div className={`w-full md:w-80 border-r border-slate-200 flex flex-col bg-white h-full ${activeConversationId && !showNewChatOverlay ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-slate-200">
@@ -473,7 +483,7 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
               <div className="flex items-center gap-1 sm:gap-2">
                 {activeConversation.isGroup && isSuperAdmin && (
                   <button 
-                    onClick={() => deleteGroupChat(activeConversation.id)}
+                    onClick={() => { if(window.confirm('Are you sure you want to delete this group chat?')) deleteGroupChat(activeConversation.id); }}
                     className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex"
                     title="Delete Group Chat"
                   >
@@ -511,8 +521,14 @@ export function ChatInterface({ initialTarget }: { initialTarget?: any }) {
                         }`}
                       >
                         {msg.imageUrl ? (
-                          <div className="flex flex-col gap-2">
-                            <img src={msg.imageUrl} alt="Uploaded image" className="max-w-full rounded-lg max-h-64 object-contain bg-black/5" />
+                          <div 
+                            className="flex flex-col gap-2 relative group cursor-pointer"
+                            onClick={() => setFullscreenImage({ content: msg.imageUrl, name: 'Shared Image' })}
+                          >
+                            <img src={msg.imageUrl} alt="Uploaded image" className="max-w-full rounded-lg max-h-64 object-contain" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                              <Maximize2 className="w-8 h-8 text-white drop-shadow-md" />
+                            </div>
                             {msg.text !== 'Sent an image' && <span>{msg.text}</span>}
                           </div>
                         ) : (

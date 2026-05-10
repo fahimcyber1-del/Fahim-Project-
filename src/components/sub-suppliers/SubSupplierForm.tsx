@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { SubSupplierRecord, SupplierCategory, SupplierStatus, SupplierRiskLevel } from './types';
-import { ArrowLeft, Save, Star, Upload, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, Star, Upload, ImageIcon, Search } from 'lucide-react';
+import { useSubSupplierCategoriesState, useSubSupplierConfig } from '../../store';
+import { useApiStorage } from '../../hooks/useApiData';
+import { INITIAL_DOCUMENTS } from '../document-control/mockData';
+import { DocumentRecord } from '../document-control/types';
 import { format } from 'date-fns';
 
 interface SubSupplierFormProps {
   initialData?: SubSupplierRecord;
   onSave: (data: SubSupplierRecord) => void;
-  onCancel: () => void;
+  onCancel: (view?: any) => void;
+  onManageCategories?: () => void;
 }
 
-export function SubSupplierForm({ initialData, onSave, onCancel }: SubSupplierFormProps) {
+export function SubSupplierForm({ initialData, onSave, onCancel, onManageCategories }: SubSupplierFormProps) {
+  const { categories } = useSubSupplierCategoriesState();
+  const { config } = useSubSupplierConfig();
+  const [documents] = useApiStorage<DocumentRecord>('aqm_documentcontrol_records', INITIAL_DOCUMENTS);
+  const [showDocSuggestions, setShowDocSuggestions] = useState(false);
+
   const [formData, setFormData] = useState<Partial<SubSupplierRecord>>(initialData || {
     id: `SUP-${Math.floor(Math.random() * 10000)}`,
     name: '',
@@ -17,7 +27,7 @@ export function SubSupplierForm({ initialData, onSave, onCancel }: SubSupplierFo
     phone: '',
     contactPerson: '',
     country: '',
-    category: 'Fabric',
+    category: categories[0] || 'Fabric',
     rating: 0,
     status: 'Pending Approval',
     riskLevel: 'Medium',
@@ -26,8 +36,15 @@ export function SubSupplierForm({ initialData, onSave, onCancel }: SubSupplierFo
     website: '',
     notes: '',
     joinDate: format(new Date(), 'yyyy-MM-dd'),
-    logoUrl: ''
+    logoUrl: '',
+    documentCode: config.documentCode || ''
   });
+
+  const filteredDocs = documents.filter(doc => 
+    !formData.documentCode ||
+    doc.id.toLowerCase().includes(formData.documentCode.toLowerCase()) || 
+    doc.title.toLowerCase().includes(formData.documentCode.toLowerCase())
+  );
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,7 +69,18 @@ export function SubSupplierForm({ initialData, onSave, onCancel }: SubSupplierFo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.contactPerson) return;
-    onSave(formData as SubSupplierRecord);
+    
+    const now = new Date().toISOString();
+    const currentUser = 'John Doe'; // In a real app, this would be from an auth context
+    
+    const updatedData = {
+      ...formData,
+      lastEditedAt: now,
+      lastEditedBy: currentUser,
+      ...(initialData ? {} : { createdAt: now, createdBy: currentUser })
+    };
+    
+    onSave(updatedData as SubSupplierRecord);
   };
 
   return (
@@ -77,25 +105,65 @@ export function SubSupplierForm({ initialData, onSave, onCancel }: SubSupplierFo
                 <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="Acme Corp" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Category</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Category</label>
+                  {onManageCategories && (
+                    <button type="button" onClick={onManageCategories} className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider">Manage</button>
+                  )}
+                </div>
                 <select name="category" value={formData.category || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
-                  <option value="Fabric">Fabric</option>
-                  <option value="Trims & Accessories">Trims & Accessories</option>
-                  <option value="Packaging">Packaging</option>
-                  <option value="Chemicals">Chemicals</option>
-                  <option value="Service">Service</option>
-                  <option value="Other">Other</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Address</label>
-                <input required type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="123 Street Name, City, Postal Code" />
+              <div className="relative">
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Document Code</label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    name="documentCode" 
+                    value={formData.documentCode || ''} 
+                    onChange={handleChange}
+                    onFocus={() => setShowDocSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowDocSuggestions(false), 200)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 pl-9" 
+                    placeholder="Search docs or type..." 
+                  />
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                </div>
+                {showDocSuggestions && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                    {filteredDocs.length > 0 ? (
+                      filteredDocs.map(doc => (
+                        <button
+                          key={doc.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, documentCode: `${doc.id} Rev ${doc.version}` }));
+                            setShowDocSuggestions(false);
+                          }}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex flex-col gap-0.5"
+                        >
+                          <span className="text-sm font-bold text-slate-800">{doc.id} (Rev {doc.version})</span>
+                          <span className="text-[10px] text-slate-500 truncate">{doc.title}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-xs text-slate-500 text-center">No documents found.</div>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Country</label>
                 <input required type="text" name="country" value={formData.country || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="e.g., Vietnam" />
               </div>
-              <div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Address</label>
+                <input required type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="123 Street Name, City, Postal Code" />
+              </div>
+              <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Website</label>
                 <input type="text" name="website" value={formData.website || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="https://..." />
               </div>

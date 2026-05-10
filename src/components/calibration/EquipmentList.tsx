@@ -6,9 +6,10 @@ interface EquipmentListProps {
   equipmentList: Equipment[];
   onView: (id: string) => void;
   onCreate: () => void;
+  onDelete?: (id: string) => void;
 }
 
-export function EquipmentList({ equipmentList, onView, onCreate }: EquipmentListProps) {
+export function EquipmentList({ equipmentList, onView, onCreate, onDelete }: EquipmentListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -163,6 +164,12 @@ export function EquipmentList({ equipmentList, onView, onCreate }: EquipmentList
               <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
                 <span className="text-xs font-semibold text-slate-600">{selectedIds.size} selected</span>
                 <button 
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete ${selectedIds.size} selected records?`)) {
+                      // Bulk delete logic would go here
+                      setSelectedIds(new Set());
+                    }
+                  }}
                   className="flex items-center gap-1 px-2 py-1.5 bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs font-semibold rounded transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" /> Delete
@@ -238,7 +245,7 @@ export function EquipmentList({ equipmentList, onView, onCreate }: EquipmentList
                                  <button onClick={() => { setOpenActionMenuId(null); onView(record.id); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
                                     <Edit className="w-4 h-4" /> Edit
                                  </button>
-                                 <button onClick={() => setOpenActionMenuId(null)} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded text-left">
+                                 <button onClick={() => { if(window.confirm('Are you sure you want to delete this record?')) onDelete?.(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded text-left">
                                     <Trash2 className="w-4 h-4" /> Delete
                                  </button>
                               </div>

@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { ExportModal, ProductionQualityExportOptions } from './ExportModal';
 
 interface SummaryProps {
   records: QualityRecord[];
@@ -96,6 +97,9 @@ export function ProductionQualitySummary({ records, onView, onEdit, onDelete, on
     }
   };
 
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportTarget, setExportTarget] = useState<QualityRecord[] | null>(null);
+
   const toggleSelect = (id: string) => {
     const newSelect = new Set(selectedIds);
     if (newSelect.has(id)) {
@@ -106,7 +110,13 @@ export function ProductionQualitySummary({ records, onView, onEdit, onDelete, on
     setSelectedIds(newSelect);
   };
 
-  const exportPDF = (dataToExport: QualityRecord[] = filteredRecords) => {
+  const handleOpenExportModal = (target: QualityRecord[] = filteredRecords) => {
+    setExportTarget(target);
+    setShowExportModal(true);
+  };
+
+  const handleExportPDF = (options: any) => {
+    const dataToExport = exportTarget || filteredRecords;
     const doc = new jsPDF();
     doc.text('Production Quality Report', 14, 15);
     
@@ -130,25 +140,30 @@ export function ProductionQualitySummary({ records, onView, onEdit, onDelete, on
     doc.save('Production_Quality_Report.pdf');
   };
 
-  const exportExcel = (dataToExport: QualityRecord[] = filteredRecords) => {
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(r => ({
-      ID: r.id,
-      Date: r.date,
-      Unit: r.unit,
-      Line: r.line,
-      Style: r.style,
-      Buyer: r.buyer,
-      Color: r.color,
-      Size: r.size,
-      Inspected: r.inspectedQuantity,
-      Passed: r.passedQuantity,
-      Defected: r.defectedQuantity,
-      Reworked: r.reworkedQuantity,
-      Rejected: r.rejectedQuantity,
-      Status: r.status,
-      Inspector: r.inspector,
-      Remarks: r.remarks
-    })));
+  const handleExportExcel = (options: any) => {
+    const dataToExport = exportTarget || filteredRecords;
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(r => {
+      const baseRow: any = {
+        ID: r.id,
+        Date: r.date,
+        Unit: r.unit,
+        Line: r.line,
+      };
+
+      if (options?.includeGeneralDetails || !options) {
+        baseRow['Style'] = r.style;
+        baseRow['Buyer'] = r.buyer;
+        baseRow['Color'] = r.color;
+        baseRow['Size'] = r.size;
+        baseRow['Inspected'] = r.inspectedQuantity;
+        baseRow['Passed'] = r.passedQuantity;
+        baseRow['Defected'] = r.defectedQuantity;
+        baseRow['Status'] = r.status;
+        baseRow['Reworked'] = r.reworkedQuantity;
+        baseRow['Rejected'] = r.rejectedQuantity;
+      }
+      return baseRow;
+    }));
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Quality Records');
     XLSX.writeFile(workbook, 'Production_Quality_Report.xlsx');
@@ -179,16 +194,10 @@ export function ProductionQualitySummary({ records, onView, onEdit, onDelete, on
                <Filter className="w-4 h-4" /> Filters {isFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button 
-              onClick={() => exportPDF()}
+              onClick={() => handleOpenExportModal()}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"
             >
-              <FileText className="w-4 h-4" /> Export PDF
-            </button>
-            <button 
-              onClick={() => exportExcel()}
-              className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"
-            >
-              <Download className="w-4 h-4" /> Export Excel
+              <Download className="w-4 h-4" /> Export
             </button>
             <button 
               onClick={onCreate}
@@ -345,11 +354,8 @@ export function ProductionQualitySummary({ records, onView, onEdit, onDelete, on
                                 <button onClick={() => { onEdit(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
                                     <Edit className="w-4 h-4" /> Edit
                                  </button>
-                                 <button onClick={() => { exportPDF([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                                    <FileText className="w-4 h-4" /> Export PDF
-                                 </button>
-                                 <button onClick={() => { exportExcel([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
-                                    <Download className="w-4 h-4" /> Export Excel
+                                 <button onClick={() => { handleOpenExportModal([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded">
+                                    <Download className="w-4 h-4" /> Export
                                  </button>
                                  <button onClick={() => { setConfirmDelete({ ids: [record.id], message: 'Are you sure you want to delete this record?' }); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded">
                                     <Trash2 className="w-4 h-4" /> Delete
@@ -425,6 +431,14 @@ export function ProductionQualitySummary({ records, onView, onEdit, onDelete, on
           </div>
         )}
       </div>
+
+      {showExportModal && (
+        <ExportModal 
+          onClose={() => setShowExportModal(false)}
+          onExportPDF={handleExportPDF}
+          onExportCSV={handleExportExcel}
+        />
+      )}
     </div>
   );
 }

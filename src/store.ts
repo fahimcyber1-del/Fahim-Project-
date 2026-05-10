@@ -33,3 +33,36 @@ export function useAuditsState() {
 
   return { audits, setAudits: setAuditsState };
 }
+
+const INITIAL_CATEGORIES = [
+  'Fabric', 'Trims & Accessories', 'Packaging', 'Chemicals', 'Service', 'Other'
+];
+
+export function useSubSupplierCategoriesState() {
+  const [categories, setCategories] = useApiStorage<string>('aqm_subsupplier_categories', INITIAL_CATEGORIES);
+  return { categories, setCategories };
+}
+
+export function useIncomingQCConfig() {
+  const [configArray, setConfigArray] = useApiStorage<{ documentCode: string }>('aqm_incomingqc_config', [{ documentCode: '' }]);
+  
+  const config = configArray[0] || { documentCode: '' };
+  
+  const setConfig = (newConfig: { documentCode: string }) => {
+    setConfigArray([newConfig]);
+  };
+  
+  return { config, setConfig };
+}
+
+export function useSubSupplierConfig() {
+  const [configArray, setConfigArray] = useApiStorage<{ documentCode: string }>('aqm_subsupplier_config', [{ documentCode: '' }]);
+  
+  const config = configArray[0] || { documentCode: '' };
+  
+  const setConfig = (newConfig: { documentCode: string }) => {
+    setConfigArray([newConfig]);
+  };
+  
+  return { config, setConfig };
+}

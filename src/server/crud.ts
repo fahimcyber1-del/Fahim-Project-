@@ -8,7 +8,7 @@ router.get('/:table', (req, res) => {
   const { table } = req.params;
   try {
     const rows = db.prepare(`SELECT * FROM ${table}`).all();
-    res.json(rows.map(r => {
+    res.json(rows.map((r: any) => {
       if (r.data) {
         return { id: r.id, ...JSON.parse(r.data) };
       }

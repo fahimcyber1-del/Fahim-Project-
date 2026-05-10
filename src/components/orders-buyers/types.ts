@@ -64,6 +64,7 @@ export interface Order {
   hasWashing?: boolean;
   washingInstructions?: string;
   accessoriesItemName?: string;
+  accessoriesQuantity?: number;
   accessoriesInhouseDate?: string;
   cuttingQuantity?: number;
   cuttingStartDate?: string;
@@ -82,4 +83,10 @@ export interface Order {
   finishingStartDate?: string;
   finishingEndDate?: string;
   packingQuantity?: number;
+  
+  // Audit Trail
+  createdBy?: string;
+  createdAt?: string;
+  lastEditedBy?: string;
+  lastEditedAt?: string;
 }

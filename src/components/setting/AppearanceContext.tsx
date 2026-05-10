@@ -13,6 +13,8 @@ export interface AppearanceState {
   buttonStyle: string;
   fontStyle: string;
   uiStyle: string;
+  hideTopbar: boolean;
+  uiSize: string;
 }
 
 const defaultState: AppearanceState = {
@@ -25,7 +27,9 @@ const defaultState: AppearanceState = {
   cardStyle: 'shadow',
   buttonStyle: 'rounded',
   fontStyle: 'inter',
-  uiStyle: 'default'
+  uiStyle: 'default',
+  hideTopbar: false,
+  uiSize: 'default'
 };
 
 interface AppearanceContextType {

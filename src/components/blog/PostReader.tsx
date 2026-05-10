@@ -1,28 +1,22 @@
 import React from 'react';
 import { ArrowLeft, Clock, User, Share2, Bookmark, ThumbsUp, Calendar } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
+import 'react-quill-new/dist/quill.snow.css'; // ensure styles like ql-video or lists might inherit correct display
 
 export function PostReader({ post, onBack }: { post: any, onBack: () => void }) {
   // Mock content for the article to simulate a full blog post
   const mockContent = `
-## Introduction
-
-In today's fast-paced manufacturing environment, adherence to quality standards is more than just a compliance requirement—it's a fundamental driver of business excellence. The latest iteration of the standard emphasizes a proactive approach to risk management and organizational continuous improvement over mere corrective actions.
-
-### The Shift in Paradigm
-
-Previously, organizations often treated audits as a checklist exercise. We have observed a meaningful shift where teams integrate quality assurance into their daily operations. By utilizing tools like the 5-Whys methodology and fishbone diagrams during root cause analysis, teams can isolate issues earlier.
-
-Key strategies include:
-- Establishing regular cross-functional review meetings.
-- Implementing real-time monitoring of defect rates.
-- Conducting supplier capability assessments before finalizing contracts.
-
-### Conclusion
-
-Our continued focus should reside on building a resilient supply chain and robust internal processes. By adopting these methods, we not only pass audits but also deliver superior products to our customers.
+<h2>Introduction</h2>
+<p>In today's fast-paced manufacturing environment, adherence to quality standards is more than just a compliance requirement—it's a fundamental driver of business excellence. The latest iteration of the standard emphasizes a proactive approach to risk management and organizational continuous improvement over mere corrective actions.</p>
+<h3>The Shift in Paradigm</h3>
+<p>Previously, organizations often treated audits as a checklist exercise. We have observed a meaningful shift where teams integrate quality assurance into their daily operations. By utilizing tools like the 5-Whys methodology and fishbone diagrams during root cause analysis, teams can isolate issues earlier.</p>
+<p>Key strategies include:</p>
+<ul>
+  <li>Establishing regular cross-functional review meetings.</li>
+  <li>Implementing real-time monitoring of defect rates.</li>
+  <li>Conducting supplier capability assessments before finalizing contracts.</li>
+</ul>
+<h3>Conclusion</h3>
+<p>Our continued focus should reside on building a resilient supply chain and robust internal processes. By adopting these methods, we not only pass audits but also deliver superior products to our customers.</p>
   `;
 
   const contentToRender = post.content || mockContent;
@@ -78,17 +72,10 @@ Our continued focus should reside on building a resilient supply chain and robus
               {post.excerpt}
             </p>
             
-            <div className="prose prose-slate prose-lg max-w-none prose-img:rounded-xl prose-img:shadow-md prose-headings:text-slate-900 prose-a:text-sky-600 hover:prose-a:text-sky-700">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-              >
-                {contentToRender}
-              </ReactMarkdown>
-            </div>
+            <div className="prose prose-slate prose-lg max-w-none prose-img:rounded-xl prose-img:shadow-md prose-headings:text-slate-900 prose-a:text-sky-600 hover:prose-a:text-sky-700 ql-editor" dangerouslySetInnerHTML={{ __html: contentToRender }} />
             
             <div className="mt-12 flex items-center gap-4">
-              {post.tags.map((tag: string) => (
+              {post.tags?.map((tag: string) => (
                 <span key={tag} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold">
                   #{tag}
                 </span>
@@ -98,7 +85,7 @@ Our continued focus should reside on building a resilient supply chain and robus
             <div className="mt-12 pt-8 border-t border-slate-200 flex items-center justify-between">
               <button className="flex items-center gap-2 px-6 py-3 border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-50 hover:text-sky-600 transition-colors">
                 <ThumbsUp className="w-5 h-5" />
-                Helpful Article ({post.likes})
+                Helpful Article ({post.likes || 0})
               </button>
             </div>
           </div>

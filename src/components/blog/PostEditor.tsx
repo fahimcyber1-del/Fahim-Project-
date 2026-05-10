@@ -1,5 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { ArrowLeft, Send, Save, Image as ImageIcon, Link as LinkIcon, List, Bold, Italic, Heading1, Heading2, Heading3, Quote, Code, Strikethrough, Underline, CheckSquare } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Send, Save } from 'lucide-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+import { apiStorage } from '../../utils/apiStorage';
 
 export function PostEditor({ onBack, onSave }: { onBack: () => void, onSave: (post: any) => void }) {
   const [title, setTitle] = useState('');
@@ -7,12 +10,21 @@ export function PostEditor({ onBack, onSave }: { onBack: () => void, onSave: (po
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('General');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [authorName, setAuthorName] = useState('Current User');
+
+  useEffect(() => {
+    try {
+      const userStr = apiStorage.getItem('userProfile');
+      if (userStr) {
+        const profile = JSON.parse(userStr);
+        setAuthorName(profile.name || 'Current User');
+      }
+    } catch(e) {}
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !content) return;
+    if (!title || !content || content === '<p><br></p>') return;
     
     setIsSubmitting(true);
     
@@ -21,10 +33,10 @@ export function PostEditor({ onBack, onSave }: { onBack: () => void, onSave: (po
       onSave({
         id: Date.now(),
         title,
-        excerpt: excerpt || content.substring(0, 100) + '...',
+        excerpt: excerpt || title,
         content: content,
         category,
-        author: 'Current User',
+        author: authorName,
         date: 'Just now',
         readTime: '1 min read',
         likes: 0,
@@ -34,48 +46,22 @@ export function PostEditor({ onBack, onSave }: { onBack: () => void, onSave: (po
     }, 800);
   };
 
-  const insertFormatting = (prefix: string, suffix: string = '', defaultText: string = '') => {
-    if (!textareaRef.current) return;
-    
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end) || defaultText;
-    
-    const newContent = content.substring(0, start) + prefix + selectedText + suffix + content.substring(end);
-    setContent(newContent);
-    
-    // Set focus back and adjust selection
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length);
-    }, 0);
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{'list': 'ordered'}, {'list': 'bullet'}],
+      ['link', 'image'],
+      ['clean']
+    ],
   };
 
-  const handleBold = () => insertFormatting('**', '**', 'bold text');
-  const handleItalic = () => insertFormatting('*', '*', 'italic text');
-  const handleStrikethrough = () => insertFormatting('~~', '~~', 'strikethrough text');
-  const handleUnderline = () => insertFormatting('<u>', '</u>', 'underline text');
-  const handleH1 = () => insertFormatting('# ', '', 'Heading 1');
-  const handleH2 = () => insertFormatting('## ', '', 'Heading 2');
-  const handleH3 = () => insertFormatting('### ', '', 'Heading 3');
-  const handleQuote = () => insertFormatting('> ', '', 'quoted text');
-  const handleCode = () => insertFormatting('`', '`', 'code');
-  const handleList = () => insertFormatting('- ', '', 'list item');
-  const handleTaskList = () => insertFormatting('- [ ] ', '', 'task item');
-  const handleLink = () => insertFormatting('[', '](https://example.com)', 'link text');
-  
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      insertFormatting('![', `](${url})`, file.name);
-    }
-  };
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'list', 'bullet',
+    'link', 'image'
+  ];
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -94,7 +80,7 @@ export function PostEditor({ onBack, onSave }: { onBack: () => void, onSave: (po
           </button>
           <button 
             onClick={handleSubmit}
-            disabled={!title || !content || isSubmitting}
+            disabled={!title || !content || content === '<p><br></p>' || isSubmitting}
             className="px-6 py-2 bg-sky-600 text-white text-sm font-bold rounded-lg hover:bg-sky-700 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
           >
             {isSubmitting ? 'Publishing...' : 'Publish Post'}
@@ -147,41 +133,18 @@ export function PostEditor({ onBack, onSave }: { onBack: () => void, onSave: (po
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-2">Article Content</label>
-              <div className="border border-slate-300 rounded-lg flex flex-col overflow-hidden focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 shadow-sm bg-white">
-                <div className="bg-slate-50 border-b border-slate-200 p-2 flex items-center flex-wrap gap-1 sticky top-0 z-10">
-                  <button type="button" onClick={handleBold} title="Bold" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Bold className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleItalic} title="Italic" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Italic className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleUnderline} title="Underline" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Underline className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleStrikethrough} title="Strikethrough" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Strikethrough className="w-4 h-4" /></button>
-                  <div className="w-px h-5 bg-slate-300 mx-1"></div>
-                  <button type="button" onClick={handleH1} title="Heading 1" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Heading1 className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleH2} title="Heading 2" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Heading2 className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleH3} title="Heading 3" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Heading3 className="w-4 h-4" /></button>
-                  <div className="w-px h-5 bg-slate-300 mx-1"></div>
-                  <button type="button" onClick={handleList} title="List" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><List className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleTaskList} title="Task List" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><CheckSquare className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleQuote} title="Blockquote" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Quote className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleCode} title="Code" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><Code className="w-4 h-4" /></button>
-                  <div className="w-px h-5 bg-slate-300 mx-1"></div>
-                  <button type="button" onClick={handleLink} title="Link" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><LinkIcon className="w-4 h-4" /></button>
-                  <button type="button" onClick={handleImageClick} title="Upload Image" className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded transition-colors"><ImageIcon className="w-4 h-4" /></button>
-                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-                </div>
-                <textarea 
-                  ref={textareaRef}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Start writing your article here... (Markdown supported)"
-                  className="w-full p-4 min-h-[400px] border-none focus:outline-none text-slate-700 resize-y leading-relaxed"
-                ></textarea>
+              <div className="border border-slate-300 rounded-lg flex flex-col overflow-hidden focus-within:ring-2 focus-within:ring-sky-500/20 focus-within:border-sky-500 shadow-sm bg-white min-h-[400px]">
+                <ReactQuill 
+                  theme="snow" 
+                  value={content} 
+                  onChange={setContent} 
+                  modules={modules}
+                  formats={formats}
+                  className="h-[350px] mb-12"
+                />
               </div>
             </div>
             
-            <div className="p-4 bg-sky-50 border border-sky-100 rounded-lg">
-              <p className="text-sm text-sky-800 font-medium">
-                💡 Tip: You can use Markdown formatting like **bold**, *italic*, and # headings in your content.
-              </p>
-            </div>
           </div>
         </div>
       </div>

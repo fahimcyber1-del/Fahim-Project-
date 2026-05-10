@@ -1,6 +1,7 @@
 import React from 'react';
 import { Equipment } from './types';
 import { Activity, AlertTriangle, CheckCircle, Scale, Clock, Settings } from 'lucide-react';
+import { Card, CardContent } from '../ui/card';
 
 interface CalibrationDashboardProps {
   equipmentList: Equipment[];
@@ -41,15 +42,17 @@ export function CalibrationDashboard({ equipmentList, onViewList }: CalibrationD
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Equipment</h3>
-            <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
-              <Scale className="w-4 h-4 text-slate-600" />
+        <Card className="flex flex-col">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Equipment</h3>
+              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
+                <Scale className="w-4 h-4 text-slate-600" />
+              </div>
             </div>
-          </div>
-          <p className="text-3xl font-black text-slate-800">{equipmentList.length}</p>
-        </div>
+            <p className="text-3xl font-black text-slate-800">{equipmentList.length}</p>
+          </CardContent>
+        </Card>
 
         <div className="bg-white border border-emerald-200 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">

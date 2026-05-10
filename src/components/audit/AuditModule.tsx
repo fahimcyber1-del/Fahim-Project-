@@ -25,6 +25,18 @@ export function AuditModule() {
     defaultSupplierQuestions,
   );
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  React.useEffect(() => {
+    const handleFullscreen = (e: CustomEvent) => setIsFullscreen(!!e.detail);
+    
+    window.addEventListener('app-fullscreen', handleFullscreen as EventListener);
+    
+    return () => {
+      window.removeEventListener('app-fullscreen', handleFullscreen as EventListener);
+    };
+  }, []);
+
   const handleSave = (data: AuditRecord) => {
     setRecords([data, ...records]);
     setViewState({ type: "list" });
@@ -79,12 +91,12 @@ export function AuditModule() {
 
   return (
     <div
-      className={`w-full h-full flex flex-col overflow-hidden ${viewState.type === "detail" ? "bg-slate-50" : "p-4 sm:p-6 lg:p-8 bg-slate-50/50"}`}
+      className={`w-full h-full flex flex-col overflow-hidden ${isFullscreen ? "bg-slate-50" : "p-4 sm:p-6 lg:p-8 bg-slate-50/50"}`}
     >
-      {renderNav()}
+      {!isFullscreen && renderNav()}
 
       <div
-        className={`flex-1 overflow-y-auto w-full ${viewState.type === "detail" ? "h-full" : ""}`}
+        className={`flex-1 overflow-y-auto w-full ${isFullscreen ? "h-full" : ""}`}
       >
         {viewState.type === "dashboard" && <AuditDashboard audits={records} />}
         {viewState.type === "calendar" && <AuditCalendar audits={records} />}

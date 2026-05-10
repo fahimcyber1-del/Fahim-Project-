@@ -66,6 +66,7 @@ export function CalibrationModule() {
              equipmentList={records}
              onView={(id) => setViewState({ type: 'detail', recordId: id })}
              onCreate={() => setViewState({ type: 'form' })}
+             onEdit={(id) => setViewState({ type: 'form', recordId: id })}
            />
         )}
         {viewState.type === 'form' && (

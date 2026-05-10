@@ -1,0 +1,24 @@
+src/components/orders-buyers/OrderDetail.tsx:294:               {/* Product Card */}
+src/components/orders-buyers/OrderDetail.tsx:375:                       <CreditCard className="w-4 h-4" />
+src/components/sop-management/SopDetail.tsx:96:            {/* Roles & Info Card */}
+src/components/setting/SystemStatusSettings.tsx:103:        {/* Server Load Card */}
+src/components/setting/SystemStatusSettings.tsx:139:        {/* Database Card */}
+src/components/setting/SystemStatusSettings.tsx:169:        {/* Storage Card */}
+src/components/setting/SystemStatusSettings.tsx:199:        {/* Traffic / Users Card */}
+src/components/setting/DeploymentSettings.tsx:39:      <Card className="border-indigo-100 bg-indigo-50/30">
+src/components/setting/DeploymentSettings.tsx:71:        <Card className="border-slate-200">
+src/components/setting/DeploymentSettings.tsx:97:        <Card className="border-slate-200">
+src/components/setting/DeploymentSettings.tsx:119:        <Card className="border-slate-200 md:col-span-2 bg-indigo-50/50">
+src/components/setting/AppearanceSettings.tsx:310:                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Card Style</label>
+src/components/layout/StandardListView.tsx:271:            {GridCard ? (
+src/components/layout/StandardListView.tsx:274:                    <GridCard 
+src/components/procedure/ProcedureList.tsx:66:  const GridCard = ({ data, onAction }: { data: ProcedureRecord, onAction: (action: string, id: string) => void }) => (
+src/components/ui/card.tsx:5:const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+src/components/dashboard/Dashboard.tsx:224:            <Card onClick={() => handleNavigate(metric.route)} className={`relative overflow-hidden cursor-pointer shadow-sm border ${metric.border} ${metric.bg} hover:shadow-md transition-all duration-300`}>
+src/components/dashboard/Dashboard.tsx:246:            <Card onClick={() => handleNavigate(metric.route)} className={`shadow-sm border-l-4 ${metric.border} cursor-pointer hover:bg-slate-50 transition-colors`}>
+src/components/dashboard/Dashboard.tsx:265:            <Card className="shadow-sm border-slate-200">
+src/components/dashboard/Dashboard.tsx:281:        <Card className="col-span-1 lg:col-span-4 shadow-sm border-slate-200 flex flex-col">
+src/components/dashboard/Dashboard.tsx:317:        <Card className="col-span-1 lg:col-span-3 shadow-sm border-slate-200 flex flex-col">
+src/components/dashboard/Dashboard.tsx:358:        <Card className="col-span-1 lg:col-span-4 shadow-sm border-slate-200 flex flex-col">
+src/components/dashboard/Dashboard.tsx:384:        <Card className="col-span-1 lg:col-span-3 shadow-sm border-slate-200 flex flex-col">
+src/components/dashboard/Dashboard.tsx:406:        <Card className="col-span-1 lg:col-span-7 shadow-sm border-slate-200 flex flex-col">

@@ -539,3 +539,117 @@ div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-t
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
+
+/* Industry Level */
+@keyframes borderPulseGlow {
+  0%, 100% { border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 0 10px rgba(56, 189, 248, 0.1); }
+  50% { border-color: rgba(56, 189, 248, 1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.5), inset 0 0 10px rgba(56, 189, 248, 0.2); }
+}
+
+@keyframes buttonPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(56, 189, 248, 0.4), inset 0 0 5px rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.6); }
+  50% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.8), inset 0 0 10px rgba(56, 189, 248, 0.5); border-color: rgba(186, 230, 253, 1); }
+}
+
+[data-ui-style="industry"] {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace !important;
+}
+
+[data-ui-style="industry"] body,
+[data-ui-style="industry"] #root {
+  background-color: transparent !important;
+}
+
+[data-ui-style="industry"] header,
+[data-ui-style="industry"] nav,
+[data-ui-style="industry"] aside {
+  background-color: rgba(15, 23, 42, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-right: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-ui-style="industry"] .bg-white.rounded-xl,
+[data-ui-style="industry"] .bg-slate-50.rounded-xl,
+[data-ui-style="industry"] .bg-white.border {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.3s ease !important;
+  color: #f8fafc !important;
+  animation: borderPulseGlow 4s infinite ease-in-out !important;
+}
+
+[data-ui-style="industry"] .bg-white.rounded-xl:hover,
+[data-ui-style="industry"] .bg-slate-50.rounded-xl:hover {
+  animation: none !important;
+  border-color: rgba(186, 230, 253, 0.8) !important;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.5), inset 0 0 15px rgba(56, 189, 248, 0.2) !important;
+}
+
+[data-ui-style="industry"] button {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.6) !important;
+  border-radius: 2px !important;
+  color: #38bdf8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  animation: buttonPulse 3s infinite ease-in-out !important;
+}
+
+[data-ui-style="industry"] button:hover {
+  animation: none !important;
+  background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.8) !important;
+  border-color: #ffffff !important;
+}
+
+[data-ui-style="industry"] h1,
+[data-ui-style="industry"] h2,
+[data-ui-style="industry"] h3,
+[data-ui-style="industry"] h4,
+[data-ui-style="industry"] p,
+[data-ui-style="industry"] span:not(.lucide),
+[data-ui-style="industry"] label,
+[data-ui-style="industry"] td,
+[data-ui-style="industry"] th,
+[data-ui-style="industry"] div:not(.bg-white) {
+  color: #e2e8f0 !important;
+}
+
+[data-ui-style="industry"] .text-slate-500,
+[data-ui-style="industry"] .text-gray-500,
+[data-ui-style="industry"] .text-slate-600,
+[data-ui-style="industry"] .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+[data-ui-style="industry"] input,
+[data-ui-style="industry"] select,
+[data-ui-style="industry"] textarea {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 2px !important;
+  color: #e0f2fe !important;
+  transition: all 0.3s ease !important;
+}
+
+[data-ui-style="industry"] input:focus,
+[data-ui-style="industry"] select:focus,
+[data-ui-style="industry"] textarea:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
+  outline: none !important;
+  background-color: rgba(15, 23, 42, 0.9) !important;
+}
+

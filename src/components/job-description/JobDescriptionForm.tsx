@@ -67,7 +67,7 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
   return (
     <div className="max-w-5xl mx-auto w-full pb-12">
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={onCancel} type="button" className="p-2 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-full transition-colors">
+        <button onClick={onCancel} type="button" className="p-2 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-full transition-colors" aria-label="Go back">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
@@ -83,23 +83,23 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">Basic Info</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:p-6">
               <div className="md:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Job Title *</label>
-                <input required type="text" name="title" value={formData.title || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Senior Software Engineer" />
+                <label htmlFor="title" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Job Title *</label>
+                <input required id="title" type="text" name="title" value={formData.title || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Senior Software Engineer" />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Department *</label>
-                <input required type="text" name="department" value={formData.department || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Engineering" />
+                <label htmlFor="department" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Department *</label>
+                <input required id="department" type="text" name="department" value={formData.department || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Engineering" />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Location *</label>
-                <input required type="text" name="location" value={formData.location || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Remote, New York, NY" />
+                <label htmlFor="location" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Location *</label>
+                <input required id="location" type="text" name="location" value={formData.location || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Remote, New York, NY" />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Employment Type</label>
-                <select name="employmentType" value={formData.employmentType || 'Full-time'} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <label htmlFor="employmentType" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Employment Type</label>
+                <select id="employmentType" name="employmentType" value={formData.employmentType || 'Full-time'} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
                   <option value="Contract">Contract</option>
@@ -109,8 +109,8 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Experience Level</label>
-                <select name="experienceLevel" value={formData.experienceLevel || 'Entry Level'} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <label htmlFor="experienceLevel" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Experience Level</label>
+                <select id="experienceLevel" name="experienceLevel" value={formData.experienceLevel || 'Entry Level'} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
                   <option value="Entry Level">Entry Level</option>
                   <option value="Mid Level">Mid Level</option>
                   <option value="Senior Level">Senior Level</option>
@@ -120,18 +120,18 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Salary Range</label>
-                <input type="text" name="salaryRange" value={formData.salaryRange || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. $100,000 - $120,000" />
+                <label htmlFor="salaryRange" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Salary Range</label>
+                <input id="salaryRange" type="text" name="salaryRange" value={formData.salaryRange || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. $100,000 - $120,000" />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Reports To</label>
-                <input type="text" name="reportsTo" value={formData.reportsTo || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Director of Engineering" />
+                <label htmlFor="reportsTo" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Reports To</label>
+                <input id="reportsTo" type="text" name="reportsTo" value={formData.reportsTo || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Director of Engineering" />
               </div>
               
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status</label>
-                <select name="status" value={formData.status || 'Draft'} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <label htmlFor="status" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+                <select id="status" name="status" value={formData.status || 'Draft'} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
                   <option value="Draft">Draft</option>
                   <option value="Active">Active</option>
                   <option value="Closed">Closed</option>
@@ -145,8 +145,8 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2">Description</h3>
              <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Summary *</label>
-                  <textarea required name="summary" rows={3} value={formData.summary || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="Brief overview of the role..." />
+                  <label htmlFor="summary" className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Summary *</label>
+                  <textarea id="summary" required name="summary" rows={3} value={formData.summary || ''} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="Brief overview of the role..." />
                 </div>
              </div>
           </div>
@@ -163,10 +163,10 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
               <p className="text-sm text-slate-500 italic">No responsibilities added.</p>
             ) : (
               <div className="space-y-2">
-                {formData.responsibilities.map(item => (
+                {formData.responsibilities.map((item, idx) => (
                   <div key={item.id} className="flex items-center gap-2">
-                    <input type="text" value={item.value} onChange={(e) => handleListChange('responsibilities', item.id, e.target.value)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Develop and maintain backend services" />
-                    <button type="button" onClick={() => handleRemoveListItem('responsibilities', item.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+                    <input type="text" aria-label={`Responsibility ${idx + 1}`} value={item.value} onChange={(e) => handleListChange('responsibilities', item.id, e.target.value)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. Develop and maintain backend services" />
+                    <button type="button" aria-label={`Remove responsibility ${idx + 1}`} onClick={() => handleRemoveListItem('responsibilities', item.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -187,10 +187,10 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
               <p className="text-sm text-slate-500 italic">No requirements added.</p>
             ) : (
               <div className="space-y-2">
-                {formData.requirements.map(item => (
+                {formData.requirements.map((item, idx) => (
                   <div key={item.id} className="flex items-center gap-2">
-                    <input type="text" value={item.value} onChange={(e) => handleListChange('requirements', item.id, e.target.value)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. 5+ years of software development experience." />
-                    <button type="button" onClick={() => handleRemoveListItem('requirements', item.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+                    <input type="text" aria-label={`Requirement ${idx + 1}`} value={item.value} onChange={(e) => handleListChange('requirements', item.id, e.target.value)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. 5+ years of software development experience." />
+                    <button type="button" aria-label={`Remove requirement ${idx + 1}`} onClick={() => handleRemoveListItem('requirements', item.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -211,10 +211,10 @@ export function JobDescriptionForm({ initialData, onSave, onCancel }: JobDescrip
               <p className="text-sm text-slate-500 italic">No skills added.</p>
             ) : (
               <div className="space-y-2">
-                {formData.skills.map(item => (
+                {formData.skills.map((item, idx) => (
                   <div key={item.id} className="flex items-center gap-2">
-                    <input type="text" value={item.value} onChange={(e) => handleListChange('skills', item.id, e.target.value)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. TypeScript" />
-                    <button type="button" onClick={() => handleRemoveListItem('skills', item.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+                    <input type="text" aria-label={`Skill ${idx + 1}`} value={item.value} onChange={(e) => handleListChange('skills', item.id, e.target.value)} className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500" placeholder="e.g. TypeScript" />
+                    <button type="button" aria-label={`Remove skill ${idx + 1}`} onClick={() => handleRemoveListItem('skills', item.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

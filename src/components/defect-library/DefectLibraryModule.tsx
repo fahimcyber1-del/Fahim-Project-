@@ -8,6 +8,7 @@ import { DefectForm } from './DefectForm';
 import { DefectDetail } from './DefectDetail';
 import { DefectSettings } from './DefectSettings';
 import { LayoutDashboard, List, FileText, Settings as SettingsIcon } from 'lucide-react';
+import { apiStorage } from '../../utils/apiStorage';
 
 export function DefectLibraryModule() {
   const [records, setRecords] = useApiStorage('aqm_defectlibrary_records', INITIAL_DEFECTS);
@@ -18,15 +19,12 @@ export function DefectLibraryModule() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    const handleFullscreen = () => setIsFullscreen(true);
-    const handleExitFullscreen = () => setIsFullscreen(false);
+    const handleFullscreen = (e: CustomEvent) => setIsFullscreen(!!e.detail);
     
-    window.addEventListener('app-fullscreen', handleFullscreen);
-    window.addEventListener('app-exit-fullscreen', handleExitFullscreen);
+    window.addEventListener('app-fullscreen', handleFullscreen as EventListener);
     
     return () => {
-      window.removeEventListener('app-fullscreen', handleFullscreen);
-      window.removeEventListener('app-exit-fullscreen', handleExitFullscreen);
+      window.removeEventListener('app-fullscreen', handleFullscreen as EventListener);
     };
   }, []);
 
@@ -47,12 +45,36 @@ export function DefectLibraryModule() {
   };
 
   const handleSave = (record: DefectItem) => {
+    let userName = 'Current User';
+    
+    try {
+      const userStr = apiStorage.getItem('userProfile');
+      if (userStr) {
+        const profile = JSON.parse(userStr);
+        userName = profile.name || 'Current User';
+      }
+    } catch(e) {}
+
+    const dateStr = new Date().toLocaleString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+
     setRecords(prev => {
       const exists = prev.find(r => r.id === record.id);
+      
+      const recordWithAudit = {
+        ...record,
+        lastUpdatedBy: userName,
+        lastUpdatedDate: dateStr,
+        createdBy: exists?.createdBy || userName,
+        createdAt: exists?.createdAt || dateStr
+      };
+
       if (exists) {
-        return prev.map(r => r.id === record.id ? record : r);
+        return prev.map(r => r.id === record.id ? recordWithAudit : r);
       }
-      return [record, ...prev];
+      return [recordWithAudit, ...prev];
     });
     setViewState({ type: 'list' });
   };

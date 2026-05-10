@@ -21,7 +21,7 @@ import {
 import { apiStorage } from "../../utils/apiStorage";
 import { apiFetch, useApiStorage } from "../../hooks/useApiData";
 import { useIncomingQCConfig } from "../../store";
-import SignatureCanvas from "react-signature-canvas";
+import SignaturePad, { SignaturePadRef } from "../ui/SignaturePad";
 import { INITIAL_DOCUMENTS } from "../document-control/mockData";
 import { DocumentRecord } from "../document-control/types";
 
@@ -59,7 +59,7 @@ export function IncomingQCForm({ onNavigate, onSubmit, initialData }: Props) {
   );
 
   const [showDocSuggestions, setShowDocSuggestions] = useState(false);
-  const sigPadRef = useRef<SignatureCanvas>(null);
+  const sigPadRef = useRef<SignaturePadRef>(null);
 
   const [sigInputDesignation, setSigInputDesignation] =
     useState("QC Inspector");
@@ -96,7 +96,7 @@ export function IncomingQCForm({ onNavigate, onSubmit, initialData }: Props) {
       name: formData.inspectorName || "Inspector",
       designation: sigInputDesignation,
       date: new Date().toISOString().split("T")[0],
-      image: sigPadRef.current?.getCanvas().toDataURL("image/png"),
+      image: sigPadRef.current?.toDataURL(),
     };
 
     setFormData((prev) => ({
@@ -857,10 +857,10 @@ export function IncomingQCForm({ onNavigate, onSubmit, initialData }: Props) {
                       Draw Signature
                     </label>
                     <div className="border border-slate-300 rounded-lg bg-white relative overflow-hidden aspect-square w-full max-w-[250px]">
-                      <SignatureCanvas
+                      <SignaturePad
                         ref={sigPadRef}
-                        penColor="black"
                         canvasProps={{ className: "w-full h-full rounded-lg" }}
+                        backgroundColor="white"
                       />
                       <button
                         type="button"

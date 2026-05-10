@@ -245,17 +245,29 @@ export function AppearanceSettings() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Topbar Style</label>
-                <select 
-                  value={localSettings.topbarStyle}
-                  onChange={(e) => setLocalSettings({...localSettings, topbarStyle: e.target.value})}
-                  disabled={!canEdit}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-500"
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="glass">Glassmorphism</option>
-                  <option value="brutalist">Brutalist</option>
-                </select>
+                <div className="flex items-center gap-2 mb-2">
+                  <select 
+                    value={localSettings.topbarStyle}
+                    onChange={(e) => setLocalSettings({...localSettings, topbarStyle: e.target.value})}
+                    disabled={!canEdit || localSettings.hideTopbar}
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-500"
+                  >
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="glass">Glassmorphism</option>
+                    <option value="brutalist">Brutalist</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer mt-3">
+                  <input
+                    type="checkbox"
+                    checked={localSettings.hideTopbar}
+                    onChange={(e) => setLocalSettings({...localSettings, hideTopbar: e.target.checked})}
+                    disabled={!canEdit}
+                    className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-slate-300 rounded"
+                  />
+                  <span className="text-sm font-semibold text-slate-700">Hide Topbar Content Completely</span>
+                </label>
               </div>
             </div>
           </div>
@@ -266,6 +278,21 @@ export function AppearanceSettings() {
               Typography & Elements
             </h3>
             <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Overall UI Size</label>
+                <select 
+                  value={localSettings.uiSize}
+                  onChange={(e) => setLocalSettings({...localSettings, uiSize: e.target.value})}
+                  disabled={!canEdit}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-500"
+                >
+                  <option value="extra-compact">Extra Compact</option>
+                  <option value="compact">Compact (Smaller padding/text)</option>
+                  <option value="default">Default</option>
+                  <option value="large">Large (More spacious)</option>
+                  <option value="extra-large">Extra Large</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Font Family</label>
                 <select 
@@ -324,6 +351,7 @@ export function AppearanceSettings() {
                   <option value="terminal">Retro Terminal</option>
                   <option value="playful">Clean & Colorful</option>
                   <option value="vibrant">Vibrant Minimal</option>
+                  <option value="industry">Industry Level (Live Animation)</option>
                 </select>
               </div>
             </div>

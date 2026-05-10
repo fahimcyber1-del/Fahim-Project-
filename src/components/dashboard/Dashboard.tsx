@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { useAppearance } from "../setting/AppearanceContext";
 import { 
   BarChart, 
   Bar, 
@@ -24,7 +25,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis
 } from "recharts";
-import { AlertCircle, CheckCircle2, TrendingDown, TrendingUp, ShieldAlert, BadgeCheck, Package, LayoutList, Target, ClipboardCheck, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, TrendingDown, TrendingUp, ShieldAlert, BadgeCheck, Package, LayoutList, Target, ClipboardCheck, Search, Filter } from "lucide-react";
 import { INITIAL_CAPAS } from "../capa/mockData";
 import { INITIAL_RECORDS as INITIAL_INSPECTIONS } from "../inspection/mockData";
 import { INITIAL_RECORDS as INITIAL_PRODUCTION } from "../production-quality/mockData";
@@ -33,10 +34,62 @@ import { format, parseISO, subMonths } from "date-fns";
 import { useApiData, apiFetch, apiSave } from "../../hooks/useApiData";
 
 export function Dashboard() {
-  const capas = useApiData('aqm_capa_records', INITIAL_CAPAS);
-  const inspections = useApiData('aqm_inspection_records', INITIAL_INSPECTIONS);
-  const productions = useApiData('aqm_productionquality_records', INITIAL_PRODUCTION);
-  const orders = useApiData('aqm_ordersbuyers_orders', INITIAL_ORDERS);
+  const { settings } = useAppearance();
+  const paddingClass = (settings.uiSize === 'compact' || settings.uiSize === 'extra-compact') ? 'p-3' : 'p-4 sm:p-6';
+  const headerPaddingClass = (settings.uiSize === 'compact' || settings.uiSize === 'extra-compact') ? 'p-2' : 'p-4 sm:p-6';
+  
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | 'custom' | 'all'>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+
+  const rawCapas = useApiData('aqm_capa_records', INITIAL_CAPAS);
+  const rawInspections = useApiData('aqm_inspection_records', INITIAL_INSPECTIONS);
+  const rawProductions = useApiData('aqm_productionquality_records', INITIAL_PRODUCTION);
+  const rawOrders = useApiData('aqm_ordersbuyers_orders', INITIAL_ORDERS);
+
+  const filterByDate = (items: any[], dateField: string) => {
+    if (dateRange === 'all') return items;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return items.filter(item => {
+      if (!item[dateField]) return true;
+      const itemDate = new Date(item[dateField]);
+      if (isNaN(itemDate.getTime())) return true;
+      
+      if (dateRange === '7d') {
+        const past = new Date(today);
+        past.setDate(today.getDate() - 7);
+        return itemDate >= past;
+      }
+      if (dateRange === '30d') {
+        const past = new Date(today);
+        past.setDate(today.getDate() - 30);
+        return itemDate >= past;
+      }
+      if (dateRange === 'custom') {
+        const start = customStartDate ? new Date(customStartDate) : null;
+        const end = customEndDate ? new Date(customEndDate) : null;
+        if (start && end) {
+          end.setHours(23, 59, 59, 999);
+          return itemDate >= start && itemDate <= end;
+        } else if (start) {
+          return itemDate >= start;
+        } else if (end) {
+          end.setHours(23, 59, 59, 999);
+          return itemDate <= end;
+        }
+        return true;
+      }
+      return true;
+    });
+  };
+
+  const capas = filterByDate(rawCapas, 'dateRaised');
+  const inspections = filterByDate(rawInspections, 'date');
+  const productions = filterByDate(rawProductions, 'date');
+  const orders = filterByDate(rawOrders, 'orderDate');
 
   const data = { capas, inspections, productions, orders };
 
@@ -213,6 +266,38 @@ export function Dashboard() {
       initial="hidden"
       animate="show"
     >
+      {/* Dashboard Header & Filter */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 md:px-0">
+        <div>
+           <h1 className="text-2xl font-bold text-slate-800">Overview</h1>
+           <p className="text-sm text-slate-500 text-muted-foreground">Monitor your key metrics and quality metrics.</p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm shrink-0">
+           <Filter className="w-4 h-4 text-slate-400 ml-2" />
+           <select 
+             value={dateRange}
+             onChange={(e) => setDateRange(e.target.value as any)}
+             className="bg-transparent border-none text-sm font-medium text-slate-700 outline-none focus:ring-0 cursor-pointer pr-2"
+           >
+             <option value="all">All Time</option>
+             <option value="7d">Last 7 Days</option>
+             <option value="30d">Last 30 Days</option>
+             <option value="custom">Custom Range</option>
+           </select>
+        </div>
+      </div>
+
+      {dateRange === 'custom' && (
+        <div className="flex justify-end px-6 md:px-0">
+           <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+              <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="text-sm border border-slate-200 rounded px-2 py-1 outline-none focus:border-indigo-500" />
+              <span className="text-slate-400 text-sm">to</span>
+              <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="text-sm border border-slate-200 rounded px-2 py-1 outline-none focus:border-indigo-500" />
+           </div>
+        </div>
+      )}
+
       {/* Top Main Metrics */}
       <div className="grid gap-4 sm:p-6 md:grid-cols-2 lg:grid-cols-4 shrink-0">
         {topMetrics.map((metric, i) => (
@@ -221,7 +306,7 @@ export function Dashboard() {
               <div className="absolute top-0 right-0 -mr-4 -mt-4 opacity-10">
                  <metric.icon className="w-32 h-32" />
               </div>
-              <CardContent className="p-4 sm:p-6 relative z-10">
+              <CardContent className={`${paddingClass} relative z-10`}>
                 <div className="flex items-center justify-between pb-2">
                   <p className="text-xs uppercase font-bold text-slate-600 tracking-wider">{metric.title}</p>
                   <div className={`p-2 rounded-lg bg-white/60 shadow-sm ${metric.color}`}>
@@ -240,7 +325,7 @@ export function Dashboard() {
         {inspectionMetrics.map((metric, i) => (
           <motion.div key={i} variants={itemVariants} whileHover={{ scale: 1.02 }}>
             <Card onClick={() => handleNavigate(metric.route)} className={`shadow-sm border-l-4 ${metric.border} cursor-pointer hover:bg-slate-50 transition-colors`}>
-              <CardContent className="p-5 flex items-center justify-between">
+              <CardContent className={`${paddingClass} flex items-center justify-between`}>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">{metric.title}</p>
                   <p className="text-3xl font-black text-slate-950">{metric.value}</p>
@@ -259,7 +344,7 @@ export function Dashboard() {
         {secondaryMetrics.map((metric, i) => (
           <motion.div key={i} variants={itemVariants}>
             <Card className="shadow-sm border-slate-200">
-              <CardContent className="p-5 flex items-center gap-4">
+              <CardContent className={`${paddingClass} flex items-center gap-4`}>
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${metric.bg} ${metric.color}`}>
                    <metric.icon className="w-6 h-6" />
                 </div>
@@ -275,7 +360,7 @@ export function Dashboard() {
 
       <motion.div variants={itemVariants} className="grid gap-4 sm:p-6 md:grid-cols-2 lg:grid-cols-7 flex-1 min-h-0">
         <Card className="col-span-1 lg:col-span-4 shadow-sm border-slate-200 flex flex-col">
-          <CardHeader className="flex justify-between items-center -mb-2">
+          <CardHeader className={`${headerPaddingClass} flex justify-between items-center -mb-2`}>
             <CardTitle>Defect Volume Trend</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
@@ -311,7 +396,7 @@ export function Dashboard() {
         </Card>
 
         <Card className="col-span-1 lg:col-span-3 shadow-sm border-slate-200 flex flex-col">
-          <CardHeader className="-mb-2">
+          <CardHeader className={`${headerPaddingClass} -mb-2`}>
             <CardTitle>Overall RFT Rate Status</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center flex-col items-center flex-1 relative">
@@ -352,7 +437,7 @@ export function Dashboard() {
         </Card>
 
         <Card className="col-span-1 lg:col-span-4 shadow-sm border-slate-200 flex flex-col">
-          <CardHeader className="-mb-2">
+          <CardHeader className={`${headerPaddingClass} -mb-2`}>
             <CardTitle>Production Volume vs RFT Rate</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
@@ -378,7 +463,7 @@ export function Dashboard() {
         </Card>
 
         <Card className="col-span-1 lg:col-span-3 shadow-sm border-slate-200 flex flex-col">
-          <CardHeader className="-mb-2">
+          <CardHeader className={`${headerPaddingClass} -mb-2`}>
             <CardTitle>Quality Categories Scan</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center flex-col items-center flex-1">
@@ -400,7 +485,7 @@ export function Dashboard() {
         </Card>
 
         <Card className="col-span-1 lg:col-span-7 shadow-sm border-slate-200 flex flex-col">
-          <CardHeader className="-mb-2">
+          <CardHeader className={`${headerPaddingClass} -mb-2`}>
             <CardTitle>Defect Distribution by Type</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">

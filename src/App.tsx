@@ -104,6 +104,21 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    // Handle UI size
+    if (settings.uiSize === 'extra-compact') {
+      document.documentElement.style.fontSize = '12px';
+    } else if (settings.uiSize === 'compact') {
+      document.documentElement.style.fontSize = '14px';
+    } else if (settings.uiSize === 'large') {
+      document.documentElement.style.fontSize = '18px';
+    } else if (settings.uiSize === 'extra-large') {
+      document.documentElement.style.fontSize = '20px';
+    } else {
+      document.documentElement.style.fontSize = '16px';
+    }
+  }, [settings.uiSize]);
+
   const handleLogin = (user: any) => {
     apiStorage.setItem('aqm_current_user', JSON.stringify(user));
     
@@ -169,7 +184,7 @@ export default function App() {
       )}
 
       <div className={`flex flex-1 flex-col overflow-hidden min-w-0 ${settings.layoutMode === 'fixed' ? 'max-w-[1440px] mx-auto w-full shadow-2xl border-x border-slate-200/50 bg-white/90 backdrop-blur-3xl' : (settings.backgroundWallpaper === 'custom' ? 'bg-white/90 backdrop-blur-sm' : '')} ${settings.theme === 'dark' ? 'dark !bg-slate-900/90' : ''}`}>
-        {!isFullscreen && (
+        {!isFullscreen && !settings.hideTopbar && (
           <Header 
             title={activeModule?.label || "App"} 
             onMenuToggle={() => setIsMobileMenuOpen(true)} 

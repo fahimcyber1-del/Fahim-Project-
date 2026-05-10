@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Equipment, CalibrationRecord } from './types';
 import { ArrowLeft, Edit3, CheckCircle, XCircle, Settings, FileText, Download, Calendar, Scale, MapPin, Tag, Plus, PlusCircle, Maximize2 } from 'lucide-react';
 import { DocumentViewerModal } from '../common/DocumentViewerModal';
+import { ExportModal, CalibrationExportOptions } from './ExportModal';
 
 interface EquipmentDetailProps {
   record: Equipment;
@@ -13,6 +14,7 @@ interface EquipmentDetailProps {
 export function EquipmentDetail({ record, onBack, onEdit, onUpdate }: EquipmentDetailProps) {
   const [fullscreenImage, setFullscreenImage] = useState<{ content: string; name: string } | null>(null);
   const [showCalibrateModal, setShowCalibrateModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [newLog, setNewLog] = useState<Partial<CalibrationRecord>>({
     date: new Date().toISOString().split('T')[0],
     result: 'PASS',
@@ -75,48 +77,64 @@ export function EquipmentDetail({ record, onBack, onEdit, onUpdate }: EquipmentD
           onClose={() => setFullscreenImage(null)}
         />
       )}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={onBack}
-            className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500 bg-slate-100"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full sm:w-auto">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={onBack}
+              className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            {record.imageUrl && (
+              <div 
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden shrink-0 border border-slate-200 shadow-sm relative group cursor-pointer block sm:hidden"
+                onClick={() => setFullscreenImage({ content: record.imageUrl!, name: record.name })}
+              >
+                  <img src={record.imageUrl} alt={record.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Maximize2 className="w-5 h-5 text-white" />
+                  </div>
+              </div>
+            )}
+          </div>
+          
+          {record.imageUrl && (
+            <div 
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden shrink-0 border border-slate-200 shadow-sm relative group cursor-pointer hidden sm:block"
+              onClick={() => setFullscreenImage({ content: record.imageUrl!, name: record.name })}
+            >
+                <img src={record.imageUrl} alt={record.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Maximize2 className="w-5 h-5 text-white" />
+                </div>
+            </div>
+          )}
+
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap mb-1">
               <h1 className="text-2xl font-black text-slate-900">{record.name}</h1>
               {getStatusBadge(record.status)}
             </div>
-            <p className="text-sm font-medium text-slate-500 mt-1">ID: {record.id} • {record.manufacturer} {record.model}</p>
+            <p className="text-sm font-medium text-slate-500 mb-4">ID: {record.id} • {record.manufacturer} {record.model}</p>
+            
+            <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setShowExportModal(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 bg-white text-slate-700 rounded-md hover:bg-slate-50 transition-colors text-sm font-bold shadow-sm"
+                >
+                  <Download className="w-4 h-4" /> Export Report
+                </button>
+                <button 
+                  onClick={() => onEdit(record.id)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 text-white rounded-md hover:bg-slate-900 transition-colors text-sm font-bold shadow-sm"
+                >
+                  <Edit3 className="w-4 h-4" /> Edit Equipment
+                </button>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-            <button 
-              className="flex items-center gap-2 px-4 py-2 border border-slate-300 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-bold shadow-sm"
-            >
-              <Download className="w-4 h-4" /> Export Report
-            </button>
-            <button 
-              onClick={() => onEdit(record.id)}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors text-sm font-bold shadow-sm"
-            >
-              <Edit3 className="w-4 h-4" /> Edit Equipment
-            </button>
-        </div>
       </div>
-
-      {record.imageUrl && (
-        <div 
-          className="w-full h-64 rounded-xl overflow-hidden shadow-sm border border-slate-200 relative group cursor-pointer"
-          onClick={() => setFullscreenImage({ content: record.imageUrl!, name: record.name })}
-        >
-           <img src={record.imageUrl} alt={record.name} className="w-full h-full object-cover" />
-           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Maximize2 className="w-8 h-8 text-white" />
-           </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:p-6">
         
@@ -338,6 +356,15 @@ export function EquipmentDetail({ record, onBack, onEdit, onUpdate }: EquipmentD
             </div>
           </div>
         </div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <ExportModal 
+          onClose={() => setShowExportModal(false)} 
+          onExportPDF={(options) => console.log('Export PDF with options:', options)}
+          onExportCSV={(options) => console.log('Export CSV with options:', options)}
+        />
       )}
     </div>
   );

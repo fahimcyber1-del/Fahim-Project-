@@ -101,10 +101,28 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
   const handleExportPDF = (options: DefectExportOptions) => {
     const dataToExport = exportTarget || filteredRecords;
     const doc = new jsPDF();
-    doc.text('Defect Library Report', 14, 15);
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFillColor(37, 99, 235); // blue-600
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DEFECT LIBRARY REPORT', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`Total Records: ${dataToExport.length}`, 14, 34);
+
+    let currentY = 50;
+
+    doc.setTextColor(30, 30, 30);
     
     autoTable(doc, {
-      startY: 20,
+      startY: currentY,
       head: [['Code', 'Name', 'Category', 'Severity', 'Status']],
       body: dataToExport.map(r => [
         r.code, 
@@ -113,6 +131,9 @@ export function DefectList({ records, onView, onEdit, onDelete, onCreate }: Defe
         r.severity,
         r.status
       ]),
+      theme: 'striped',
+      headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 4 }
     });
     
     doc.save('Defect_Library.pdf');

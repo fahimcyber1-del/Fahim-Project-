@@ -80,6 +80,7 @@ export function TestingModule() {
             records={records}
             onCreate={() => setViewState({ type: 'form' })}
             onView={(id) => setViewState({ type: 'detail', recordId: id })}
+            onEdit={(id) => setViewState({ type: 'form', recordId: id })}
           />
         )}
 

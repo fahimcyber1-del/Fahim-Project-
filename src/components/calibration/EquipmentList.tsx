@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Equipment } from './types';
 import { Search, Plus, Filter, FileText, Download, Eye, Edit, Trash2, ChevronLeft, ChevronRight, MoreHorizontal, ChevronDown, ChevronUp, LayoutGrid, List, Scale } from 'lucide-react';
+import { ExportModal, CalibrationExportOptions } from './ExportModal';
 
 interface EquipmentListProps {
   equipmentList: Equipment[];
   onView: (id: string) => void;
   onCreate: () => void;
+  onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-export function EquipmentList({ equipmentList, onView, onCreate, onDelete }: EquipmentListProps) {
+export function EquipmentList({ equipmentList, onView, onCreate, onEdit, onDelete }: EquipmentListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -18,6 +20,7 @@ export function EquipmentList({ equipmentList, onView, onCreate, onDelete }: Equ
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -108,6 +111,7 @@ export function EquipmentList({ equipmentList, onView, onCreate, onDelete }: Equ
                <Filter className="w-4 h-4" /> Filters {isFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button 
+              onClick={() => setShowExportModal(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"
             >
               <Download className="w-4 h-4" /> Export CSV
@@ -242,7 +246,7 @@ export function EquipmentList({ equipmentList, onView, onCreate, onDelete }: Equ
                             </button>
                             {openActionMenuId === record.id && (
                               <div className={`absolute right-0 w-40 bg-white border border-slate-200 rounded-md shadow-lg z-50 flex flex-col p-1 text-sm ${isLastFew ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
-                                 <button onClick={() => { setOpenActionMenuId(null); onView(record.id); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
+                                 <button onClick={() => { setOpenActionMenuId(null); onEdit?.(record.id); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
                                     <Edit className="w-4 h-4" /> Edit
                                  </button>
                                  <button onClick={() => { if(window.confirm('Are you sure you want to delete this record?')) onDelete?.(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded text-left">
@@ -275,7 +279,7 @@ export function EquipmentList({ equipmentList, onView, onCreate, onDelete }: Equ
                     <button onClick={() => onView(record.id)} className="p-1.5 bg-white/80 hover:bg-white text-slate-500 hover:text-blue-600 rounded shadow-sm border border-slate-200 transition-colors opacity-0 group-hover:opacity-100">
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button onClick={() => { onView(record.id); }} className="p-1.5 bg-white/80 hover:bg-white text-slate-500 hover:text-blue-600 rounded shadow-sm border border-slate-200 transition-colors opacity-0 group-hover:opacity-100">
+                    <button onClick={() => { onEdit?.(record.id); }} className="p-1.5 bg-white/80 hover:bg-white text-slate-500 hover:text-blue-600 rounded shadow-sm border border-slate-200 transition-colors opacity-0 group-hover:opacity-100">
                       <Edit className="w-4 h-4" />
                     </button>
                   </div>
@@ -355,6 +359,15 @@ export function EquipmentList({ equipmentList, onView, onCreate, onDelete }: Equ
         )}
 
       </div>
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <ExportModal 
+          onClose={() => setShowExportModal(false)} 
+          onExportPDF={(options) => console.log('Export PDF with options:', options)}
+          onExportCSV={(options) => console.log('Export CSV with options:', options)}
+        />
+      )}
     </div>
   );
 }

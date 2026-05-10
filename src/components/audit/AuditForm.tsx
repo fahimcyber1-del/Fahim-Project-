@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import SignatureCanvas from 'react-signature-canvas';
+import SignaturePad, { SignaturePadRef } from "../ui/SignaturePad";
 import { AuditRecord, IsoQuestion, IsoQuestionTemplate } from './types';
 import { ArrowLeft, Save, Upload, Camera, FileText, Trash2, Plus } from 'lucide-react';
 import { useSubSuppliersState } from '../../store';
@@ -29,7 +29,7 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
     attachments: []
   });
 
-  const sigPadRef = useRef<SignatureCanvas>(null);
+  const sigPadRef = useRef<SignaturePadRef>(null);
 
   const [sigInputName, setSigInputName] = useState('');
   const [sigInputDesignation, setSigInputDesignation] = useState('');
@@ -393,7 +393,7 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Draw Signature</label>
                 <div className="border border-slate-300 bg-white rounded-lg overflow-hidden flex items-center justify-center relative touch-none aspect-square w-full max-w-[250px]">
-                  <SignatureCanvas 
+                  <SignaturePad 
                     ref={sigPadRef} 
                     canvasProps={{className: 'w-full h-full cursor-crosshair'}} 
                     backgroundColor="white"

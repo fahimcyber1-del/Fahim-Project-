@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Equipment } from './types';
-import { ArrowLeft, Save, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Upload, XCircle, FileText } from 'lucide-react';
 
 interface CalibrationFormProps {
   initialData?: Equipment;
@@ -269,13 +269,18 @@ export function CalibrationForm({ initialData, onSave, onCancel }: CalibrationFo
                   <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Certificate PDF</label>
                   {formData.certificateUrl ? (
                     <div className="relative group rounded border border-slate-200 overflow-hidden h-32 w-full flex items-center justify-center bg-slate-50">
-                      <span className="text-xs font-medium text-slate-600">PDF Uploaded</span>
-                      <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center">
-                        <label className="cursor-pointer text-white hover:text-blue-200 cursor-pointer">
+                      <FileText className="w-8 h-8 text-slate-400 mb-2" />
+                      <span className="text-xs font-medium text-slate-600 ml-2">PDF Uploaded</span>
+                      <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center gap-4">
+                        <label className="cursor-pointer text-white hover:text-blue-200">
                           <Upload className="w-5 h-5 mx-auto" />
                           <span className="text-[10px] uppercase font-bold mt-1 block">Change</span>
                           <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfUpload} />
                         </label>
+                        <button type="button" onClick={() => setFormData(prev => ({...prev, certificateUrl: undefined}))} className="text-rose-200 hover:text-rose-400">
+                           <XCircle className="w-5 h-5 mx-auto" />
+                           <span className="text-[10px] uppercase font-bold mt-1 block">Remove</span>
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -291,12 +296,16 @@ export function CalibrationForm({ initialData, onSave, onCancel }: CalibrationFo
                   {formData.imageUrl ? (
                     <div className="relative group rounded border border-slate-200 overflow-hidden h-32 w-full">
                       <img src={formData.imageUrl} alt="Equipment" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center">
-                        <label className="cursor-pointer text-white hover:text-blue-200 cursor-pointer">
+                      <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center gap-4">
+                        <label className="cursor-pointer text-white hover:text-blue-200">
                           <Upload className="w-5 h-5 mx-auto" />
                           <span className="text-[10px] uppercase font-bold mt-1 block">Change</span>
                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                         </label>
+                        <button type="button" onClick={() => setFormData(prev => ({...prev, imageUrl: undefined}))} className="text-rose-200 hover:text-rose-400">
+                           <XCircle className="w-5 h-5 mx-auto" />
+                           <span className="text-[10px] uppercase font-bold mt-1 block">Remove</span>
+                        </button>
                       </div>
                     </div>
                   ) : (

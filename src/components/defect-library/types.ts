@@ -20,7 +20,8 @@ export interface DefectItem {
   
   lastUpdatedBy?: string;
   lastUpdatedDate?: string;
-  auditTrail?: { date: string; action: string; user: string; details?: string }[];
+  createdBy?: string;
+  createdAt?: string;
 }
 
 export type ViewState = 

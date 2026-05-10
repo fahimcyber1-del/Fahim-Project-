@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DefectItem } from './types';
-import { Download, Edit3, CheckCircle, XCircle, ArrowLeft, Link2, ShieldCheck, Search, Activity, FileText, Image as ImageIcon, X, History } from 'lucide-react';
+import { Download, Edit3, CheckCircle, XCircle, ArrowLeft, Link2, ShieldCheck, Search, Activity, FileText, Image as ImageIcon, X, History, User } from 'lucide-react';
 import { DocumentViewerModal } from '../common/DocumentViewerModal';
 import { ExportModal, DefectExportOptions } from './ExportModal';
 import jsPDF from 'jspdf';
@@ -18,27 +18,151 @@ export function DefectDetail({ record, onEdit, onBack }: DefectDetailProps) {
   const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
-    window.dispatchEvent(new Event('app-fullscreen'));
+    window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: true }));
     return () => {
-      window.dispatchEvent(new Event('app-exit-fullscreen'));
+      window.dispatchEvent(new CustomEvent('app-fullscreen', { detail: false }));
     };
   }, []);
 
-  const handleExportPDF = (options: DefectExportOptions) => {
+  const loadImage = (url: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    });
+  };
+
+  const handleExportPDF = async (options: DefectExportOptions) => {
     const doc = new jsPDF();
-    doc.text(`Defect Library Report: ${record.code}`, 14, 15);
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Header
+    doc.setFillColor(37, 99, 235); // blue-600
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DEFECT LIBRARY REPORT', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`Defect Code: ${record.code}`, 14, 34);
+    
+    let currentY = 50;
+    
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('General Information', 14, currentY);
+    currentY += 6;
     
     autoTable(doc, {
-      startY: 20,
-      head: [['Code', 'Name', 'Category', 'Severity', 'Status']],
-      body: [[
-        record.code, 
-        record.name,
-        record.category, 
-        record.severity,
-        record.status
-      ]],
+      startY: currentY,
+      theme: 'plain',
+      styles: { cellPadding: 3, fontSize: 10 },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+        1: { cellWidth: 55 },
+        2: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 35 },
+        3: { cellWidth: 55 }
+      },
+      body: [
+        ['Code', record.code, 'Name', record.name],
+        ['Category', record.category, 'Severity', record.severity],
+        ['Status', record.status, 'Standard Ref', record.qualityStandardRef || '-'],
+        ['Departments', record.impactedDepartments?.join(', ') || '-', 'SOP Link', record.sopLink || '-']
+      ],
     });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 15;
+    
+    if (options.includeRootCause && record.rootCauseAnalysis && record.rootCauseAnalysis.length > 0) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Root Cause Analysis', 14, currentY);
+      currentY += 6;
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Step', 'Description']],
+        body: record.rootCauseAnalysis.map(rc => [rc.step, rc.description]),
+        theme: 'striped',
+        headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 4 }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+    
+    if (options.includeResolution && (record.correctiveAction || record.preventiveAction)) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Resolution Protocol', 14, currentY);
+      currentY += 6;
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Action Type', 'Description']],
+        body: [
+          ['Corrective Action', record.correctiveAction || 'N/A'],
+          ['Preventive Action', record.preventiveAction || 'N/A']
+        ],
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 4 },
+        columnStyles: {
+           0: { fontStyle: 'bold', fillColor: [248, 250, 252], cellWidth: 40 }
+        }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeAcceptanceCriteria && record.acceptanceCriteria) {
+      if (currentY > 240) { doc.addPage(); currentY = 20; }
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Acceptance Criteria', 14, currentY);
+      currentY += 6;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const splitText = doc.splitTextToSize(record.acceptanceCriteria, 180);
+      doc.text(splitText, 14, currentY);
+      currentY += (splitText.length * 5) + 10;
+    }
+
+    if (options.includeImages) {
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Visual Standards', 14, 20);
+        let imgY = 30;
+
+        const processImages = async (urls: string[], type: string) => {
+          for (const url of urls) {
+            try {
+              const img = await loadImage(url);
+              if (imgY > 220) { doc.addPage(); imgY = 20; }
+              doc.setFontSize(12);
+              doc.setFont('helvetica', 'bold');
+              doc.text(type, 14, imgY);
+              const ratio = img.width / img.height;
+              // Set width larger
+              const width = 120;
+              const height = width / ratio;
+              doc.addImage(img, 'JPEG', 14, imgY + 5, width, height);
+              imgY += height + 20;
+            } catch (e) {
+              console.error('Failed to load image', e);
+            }
+          }
+        };
+
+        if (record.passReferenceImages) await processImages(record.passReferenceImages, 'Pass Reference');
+        if (record.failCriteriaImages) await processImages(record.failCriteriaImages, 'Fail Criteria');
+    }
     
     doc.save(`Defect_${record.code}.pdf`);
   };
@@ -304,30 +428,30 @@ export function DefectDetail({ record, onEdit, onBack }: DefectDetailProps) {
           </div>
 
           {/* Audit Trail */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
-            <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <History className="w-4 h-4 text-slate-400" /> Audit Trail
-            </h3>
-            <div className="space-y-4">
-              {record.auditTrail && record.auditTrail.length > 0 ? (
-                <div className="relative border-l-2 border-slate-100 ml-3 space-y-6">
-                  {record.auditTrail.map((log, index) => (
-                    <div key={index} className="relative pl-5">
-                      <div className="absolute w-2.5 h-2.5 bg-blue-400 rounded-full -left-[6px] top-1.5 ring-4 ring-white" />
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-400">{log.date}</span>
-                        <span className="text-sm font-semibold text-slate-800">{log.action} by {log.user}</span>
-                        {log.details && (
-                          <span className="text-sm text-slate-600 mt-0.5">{log.details}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+          <div className="bg-slate-50 p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden relative">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-bl-full opacity-50 blur-xl"></div>
+             <div className="relative z-10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200">
+                   <History className="w-5 h-5 text-blue-600" />
                 </div>
-              ) : (
-                <p className="text-sm text-slate-500 italic">No audit history available.</p>
-              )}
-            </div>
+                <div>
+                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">Audit Trail</h3>
+                   <p className="text-xs text-slate-500 font-medium">System tracking for this record</p>
+                </div>
+             </div>
+             <div className="relative z-10 flex flex-col sm:flex-row gap-4 sm:gap-8">
+                <div>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Created By</p>
+                   <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-slate-400" /> {record.createdBy || '-'}</p>
+                   <p className="text-xs text-slate-500 mt-0.5">{record.createdAt || '-'}</p>
+                </div>
+                <div className="hidden sm:block w-px bg-slate-200 h-10 my-auto"></div>
+                <div>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Last Edited By</p>
+                   <p className="text-sm font-semibold text-slate-900 flex items-center gap-1.5"><Edit3 className="w-3.5 h-3.5 text-slate-400" /> {record.lastUpdatedBy || '-'}</p>
+                   <p className="text-xs text-slate-500 mt-0.5">{record.lastUpdatedDate || '-'}</p>
+                </div>
+             </div>
           </div>
 
         </div>

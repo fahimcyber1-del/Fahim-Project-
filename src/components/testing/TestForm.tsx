@@ -77,6 +77,30 @@ export function TestForm({ initialData, onSave, onCancel }: TestFormProps) {
     }
   };
 
+  const TEST_CATEGORIES: Record<string, { id: string, desc: string }[]> = {
+    'Physical Testing': [
+      { id: 'Shrinkage Test', desc: 'Dimensional stability after washing cycles.' },
+      { id: 'Tensile Strength', desc: 'Force required to rupture the specimen.' },
+      { id: 'Pilling Resistance', desc: 'Tendency of fibers to form small balls on surface.' },
+      { id: 'Tear Strength', desc: 'Force required to propagate a tear.' }
+    ],
+    'Chemical Testing': [
+      { id: 'PH Value', desc: 'Chemical acidity/alkalinity measurement.' },
+      { id: 'Formaldehyde', desc: 'Restricted substance content verification.' },
+      { id: 'Azo Dyes', desc: 'Detection of banned azo colorants.' },
+      { id: 'Heavy Metals', desc: 'Detection of extractable heavy metals.' }
+    ],
+    'Color Fastness': [
+      { id: 'Color Fastness to Washing', desc: 'Resistance to fading from washing.' },
+      { id: 'Color Fastness to Light', desc: 'Resistance to fading from light.' },
+      { id: 'Color Fastness to Rubbing', desc: 'Resistance to fading from rubbing/crocking.' },
+      { id: 'Color Fastness to Perspiration', desc: 'Resistance to fading from perspiration.' }
+    ],
+    'Flammability Test': [
+      { id: 'Flammability', desc: 'Burning behavior of fabrics.' }
+    ]
+  };
+
   const submit = () => {
     onSave(formData as TestRequest);
   };
@@ -160,22 +184,48 @@ export function TestForm({ initialData, onSave, onCancel }: TestFormProps) {
           </div>
           <div className="pl-12 relative z-10">
             <h3 className="text-lg font-bold text-slate-800 mb-6">Test Selection</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-               {tests.map(test => {
-                 const isChecked = (formData.selectedTests || []).includes(test.id);
-                 return (
-                   <div key={test.id} onClick={() => handleTestToggle(test.id)} className={`p-4 border rounded-lg cursor-pointer transition-colors flex items-start gap-4 ${isChecked ? 'border-[#0033a0] bg-blue-50/30' : 'border-slate-200 hover:border-slate-300'}`}>
-                     <div className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center shrink-0 border ${isChecked ? 'bg-[#0033a0] border-[#0033a0]' : 'bg-white border-slate-300'}`}>
-                        {isChecked && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-                     </div>
-                     <div>
-                       <h4 className="font-bold text-sm text-slate-800">{test.id}</h4>
-                       <p className="text-xs text-slate-500 mt-1 leading-relaxed">{test.desc}</p>
-                     </div>
-                   </div>
-                 )
-               })}
+            
+            <div className="mb-6 max-w-md">
+              <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2">TEST CATEGORY</label>
+              <select 
+                name="testCategory" 
+                value={formData.testCategory || ''} 
+                onChange={(e) => {
+                  handleChange(e);
+                  // Optionally clear selected tests when category changes
+                  setFormData(prev => ({ ...prev, selectedTests: [] }));
+                }} 
+                className="w-full px-4 py-3 bg-white border border-slate-300 rounded-md text-sm text-slate-700 font-medium shadow-sm outline-none appearance-none"
+              >
+                <option value="">Select a Category</option>
+                {Object.keys(TEST_CATEGORIES).map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
+
+            {formData.testCategory ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 {(TEST_CATEGORIES[formData.testCategory] || []).map(test => {
+                   const isChecked = (formData.selectedTests || []).includes(test.id);
+                   return (
+                     <div key={test.id} onClick={() => handleTestToggle(test.id)} className={`p-4 border rounded-lg cursor-pointer transition-colors flex items-start gap-4 ${isChecked ? 'border-[#0033a0] bg-blue-50/30' : 'border-slate-200 hover:border-slate-300'}`}>
+                       <div className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center shrink-0 border ${isChecked ? 'bg-[#0033a0] border-[#0033a0]' : 'bg-white border-slate-300'}`}>
+                          {isChecked && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                       </div>
+                       <div>
+                         <h4 className="font-bold text-sm text-slate-800">{test.id}</h4>
+                         <p className="text-xs text-slate-500 mt-1 leading-relaxed">{test.desc}</p>
+                       </div>
+                     </div>
+                   )
+                 })}
+              </div>
+            ) : (
+              <div className="p-8 border-2 border-dashed border-slate-200 rounded-xl text-center">
+                <p className="text-slate-500 font-medium">Please select a test category to view available tests.</p>
+              </div>
+            )}
           </div>
       </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import SignatureCanvas from "react-signature-canvas";
+import SignaturePad, { SignaturePadRef } from "../ui/SignaturePad";
 import { QualityRecord } from "./types";
 import { ArrowLeft, Save, AlertCircle, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
@@ -50,7 +50,7 @@ export function ProductionQualityForm({
     signatures: [],
   });
 
-  const sigPadRef = useRef<SignatureCanvas>(null);
+  const sigPadRef = useRef<SignaturePadRef>(null);
   const [sigInputName, setSigInputName] = useState("");
   const [sigInputDesignation, setSigInputDesignation] = useState("");
   const [sigInputDate, setSigInputDate] = useState(
@@ -693,7 +693,7 @@ export function ProductionQualityForm({
                         <div
                           className="border border-slate-300 bg-white rounded-lg overflow-hidden flex items-center justify-center relative touch-none aspect-square w-full max-w-[250px]"
                         >
-                          <SignatureCanvas
+                          <SignaturePad
                             ref={sigPadRef}
                             canvasProps={{
                               className: "w-full h-full cursor-crosshair",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import SignatureCanvas from 'react-signature-canvas';
+import SignaturePad, { SignaturePadRef } from '../ui/SignaturePad';
 import { InspectionRecord } from './types';
 import { ArrowLeft, Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -51,7 +51,7 @@ export function InspectionForm({ initialData, onSave, onCancel }: FormProps) {
     signatures: []
   });
 
-  const sigPadRef = useRef<SignatureCanvas>(null);
+  const sigPadRef = useRef<SignaturePadRef>(null);
   const [sigInputName, setSigInputName] = useState('');
   const [sigInputDesignation, setSigInputDesignation] = useState('');
   const [sigInputDate, setSigInputDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -635,7 +635,7 @@ export function InspectionForm({ initialData, onSave, onCancel }: FormProps) {
                       <div>
                         <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Draw Signature</label>
                         <div className="border border-slate-300 bg-white rounded-lg overflow-hidden flex items-center justify-center relative touch-none" style={{ height: '200px' }}>
-                          <SignatureCanvas 
+                          <SignaturePad 
                             ref={sigPadRef} 
                             canvasProps={{className: 'w-full h-full cursor-crosshair'}} 
                             backgroundColor="white"

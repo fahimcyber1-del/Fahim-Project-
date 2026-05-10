@@ -2,6 +2,7 @@ import React from 'react';
 import { JobDescriptionRecord, JDStatus } from './types';
 import { Briefcase, CheckCircle, Clock, AlertTriangle, FileText, Users, MapPin } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Card, CardContent } from '../ui/card';
 
 interface JobDescriptionDashboardProps {
   records: JobDescriptionRecord[];
@@ -28,15 +29,17 @@ export function JobDescriptionDashboard({ records }: JobDescriptionDashboardProp
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
-               <Briefcase className="w-5 h-5" />
-            </div>
-            <h3 className="text-slate-600 font-bold text-sm">Total JDs</h3>
-          </div>
-          <p className="text-3xl font-black text-slate-900">{records.length}</p>
-        </div>
+          <Card className="flex flex-col justify-between">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
+                   <Briefcase className="w-5 h-5" />
+                </div>
+                <h3 className="text-slate-600 font-bold text-sm">Total JDs</h3>
+              </div>
+              <p className="text-3xl font-black text-slate-900">{records.length}</p>
+            </CardContent>
+          </Card>
 
         <div className="bg-white p-4 sm:p-6 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-center gap-3 mb-2">

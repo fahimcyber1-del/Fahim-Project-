@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { TestRequest } from './types';
 import { ArrowLeft, Share2, Download, Clock, ShieldCheck, CheckCircle2, Maximize2 } from 'lucide-react';
 import { DocumentViewerModal } from '../common/DocumentViewerModal';
+import { ExportModal, TestExportOptions } from './ExportModal';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface TestDetailProps {
   record: TestRequest;
@@ -11,6 +15,146 @@ interface TestDetailProps {
 
 export function TestDetail({ record, onBack, onEdit }: TestDetailProps) {
   const [fullscreenImage, setFullscreenImage] = useState<{ content: string; name: string } | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+
+  const handleExportPDF = (options: TestExportOptions) => {
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text(`Test Report: ${record.id}`, 14, 22);
+    
+    let yPos = 35;
+    
+    if (options.includeTestDetails) {
+      doc.setFontSize(12);
+      doc.text("Basic Information", 14, yPos);
+      yPos += 10;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const details = [
+        ["Test Name:", record.testName],
+        ["Status:", record.status],
+        ["Standard:", record.standard],
+        ["Lab ID:", record.labId],
+        ["Client Name:", record.buyer],
+        ["Overall Result:", record.overallResult],
+      ];
+      
+      autoTable(doc, {
+        startY: yPos,
+        body: details,
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 2 },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    }
+    
+    if (options.includeParameters && record.parameters.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Test Parameters & Results", 14, yPos);
+      yPos += 8;
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Parameter', 'Requirement', 'Actual Result', 'Status']],
+        body: record.parameters.map(p => [p.name, p.requirement, p.actualResult, p.status]),
+        theme: 'grid',
+        headStyles: { fillColor: [0, 51, 160], textColor: [255, 255, 255] },
+        styles: { fontSize: 9 }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    if (options.includeApprovals) {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Approvals", 14, yPos);
+      yPos += 10;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Lead Technician: ${record.approval.leadTechnician} (${record.approval.leadTechnicianDate})`, 14, yPos);
+      yPos += 6;
+      doc.text(`Lab Manager: ${record.approval.labManager} (${record.approval.labManagerDate})`, 14, yPos);
+      yPos += 15;
+    }
+
+    if (options.includeRemarks && record.inspectorRemarks) {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Inspector Remarks", 14, yPos);
+      yPos += 6;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const splitRemarks = doc.splitTextToSize(record.inspectorRemarks, 180);
+      doc.text(splitRemarks, 14, yPos);
+      yPos += (splitRemarks.length * 5) + 10;
+    }
+
+    if (options.includeImages && (record.specimenImages?.preTest || record.specimenImages?.postTest)) {
+      doc.addPage();
+      yPos = 20;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Specimen Images", 14, yPos);
+      yPos += 10;
+      
+      if (record.specimenImages.preTest) {
+        doc.text("Pre-Test", 14, yPos);
+        try {
+          doc.addImage(record.specimenImages.preTest, 'JPEG', 14, yPos + 5, 80, 60);
+        } catch(e) {}
+      }
+      if (record.specimenImages.postTest) {
+        doc.text("Post-Test", 110, yPos);
+        try {
+          doc.addImage(record.specimenImages.postTest, 'JPEG', 110, yPos + 5, 80, 60);
+        } catch(e) {}
+      }
+    }
+
+    doc.save(`TestReport_${record.id}.pdf`);
+  };
+
+  const handleExportCSV = (options: TestExportOptions) => {
+    let dataToExport: any[] = [];
+    
+    if (options.includeParameters && record.parameters.length > 0) {
+      dataToExport = record.parameters.map(p => ({
+        TestID: record.id,
+        TestName: record.testName,
+        LabID: record.labId,
+        Standard: record.standard,
+        OverallResult: record.overallResult,
+        Parameter: p.name,
+        Requirement: p.requirement,
+        ActualResult: p.actualResult,
+        ParameterStatus: p.status,
+      }));
+    } else {
+      dataToExport = [{
+        TestID: record.id,
+        TestName: record.testName,
+        LabID: record.labId,
+        Standard: record.standard,
+        OverallResult: record.overallResult,
+      }];
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "TestReport");
+    XLSX.writeFile(workbook, `TestReport_${record.id}.xlsx`);
+  };
 
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto flex flex-col h-full space-y-6">
@@ -35,8 +179,11 @@ export function TestDetail({ record, onBack, onEdit }: TestDetailProps) {
           <button className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2 hover:bg-slate-50 rounded-md font-bold text-sm transition-colors shadow-sm">
             <Share2 className="w-4 h-4" /> Share
           </button>
-          <button className="flex items-center gap-2 bg-[#0033a0] text-white px-4 py-2 hover:bg-blue-800 rounded-md font-bold text-sm transition-colors shadow-sm">
-            <Download className="w-4 h-4" /> Download PDF Report
+          <button 
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center gap-2 bg-[#0033a0] text-white px-4 py-2 hover:bg-blue-800 rounded-md font-bold text-sm transition-colors shadow-sm"
+          >
+            <Download className="w-4 h-4" /> Download/Export
           </button>
         </div>
       </div>
@@ -251,6 +398,14 @@ export function TestDetail({ record, onBack, onEdit }: TestDetailProps) {
             </p>
          </div>
       </div>
+
+      {showExportModal && (
+         <ExportModal 
+           onClose={() => setShowExportModal(false)} 
+           onExportPDF={handleExportPDF} 
+           onExportCSV={handleExportCSV} 
+         />
+      )}
 
     </div>
   );

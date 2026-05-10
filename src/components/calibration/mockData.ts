@@ -16,6 +16,7 @@ export const mockEquipment: Equipment[] = [
     vendor: 'Calibron Solutions',
     certificateNumber: 'CERT-884920',
     tolerance: '+/- 0.5%',
+    imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop',
     calibrations: [
       {
         id: 'CR-001',

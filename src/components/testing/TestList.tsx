@@ -1,15 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TestRequest } from './types';
 import { Search, Filter, FileText, Download, Edit, Trash2, Eye, Plus, ChevronLeft, ChevronRight, MoreHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface TestListProps {
   records: TestRequest[];
   onView: (id: string) => void;
   onCreate: () => void;
+  onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
-export function TestList({ records, onView, onCreate, onDelete }: TestListProps) {
+export function TestList({ records, onView, onCreate, onEdit, onDelete }: TestListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -80,6 +84,46 @@ export function TestList({ records, onView, onCreate, onDelete }: TestListProps)
     }
   };
 
+  const exportPDF = (dataToExport: TestRequest[] = filteredRecords) => {
+    const doc = new jsPDF();
+    doc.text('Testing Log Report', 14, 15);
+    
+    autoTable(doc, {
+      startY: 20,
+      head: [['Request ID', 'Date', 'Buyer', 'Category', 'Technician', 'Status', 'Result']],
+      body: dataToExport.map(r => [
+        r.id, 
+        r.date, 
+        r.buyer, 
+        r.testCategory, 
+        r.technician, 
+        r.status,
+        r.overallResult || 'N/A'
+      ]),
+    });
+    
+    doc.save('Testing_Log_Report.pdf');
+  };
+
+  const exportExcel = (dataToExport: TestRequest[] = filteredRecords) => {
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(r => ({
+      'Request ID': r.id,
+      Date: r.date,
+      Buyer: r.buyer,
+      Category: r.testCategory,
+      Technician: r.technician,
+      Status: r.status,
+      'Overall Result': r.overallResult,
+      'Turnaround Time': r.turnaroundTime,
+      'Compliance Score': r.complianceScore,
+      'Material Type': r.materialType,
+      'Batch ID': r.batchId,
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'TestingLog');
+    XLSX.writeFile(workbook, 'Testing_Log_Report.xlsx');
+  };
+
   return (
     <div className="border border-slate-200 bg-white rounded-lg shadow-sm">
       <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -95,11 +139,13 @@ export function TestList({ records, onView, onCreate, onDelete }: TestListProps)
                <Filter className="w-4 h-4" /> Filters {isFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button 
+              onClick={() => exportPDF()}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"
             >
               <FileText className="w-4 h-4" /> Export PDF
             </button>
             <button 
+              onClick={() => exportExcel()}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"
             >
               <Download className="w-4 h-4" /> Export Excel
@@ -254,11 +300,14 @@ export function TestList({ records, onView, onCreate, onDelete }: TestListProps)
                             </button>
                             {openActionMenuId === record.id && (
                               <div className={`absolute right-0 w-40 bg-white border border-slate-200 rounded-md shadow-lg z-50 flex flex-col p-1 text-sm ${isLastFew ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
-                                 <button onClick={() => setOpenActionMenuId(null)} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
+                                 <button onClick={() => { onEdit?.(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
                                     <Edit className="w-4 h-4" /> Edit
                                  </button>
-                                 <button onClick={() => setOpenActionMenuId(null)} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
+                                 <button onClick={() => { exportPDF([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
                                     <FileText className="w-4 h-4" /> Export PDF
+                                 </button>
+                                 <button onClick={() => { exportExcel([record]); setOpenActionMenuId(null); }} className="px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2 rounded text-left">
+                                    <Download className="w-4 h-4" /> Export Excel
                                  </button>
                                  <button onClick={() => { if(window.confirm('Are you sure you want to delete this record?')) onDelete?.(record.id); setOpenActionMenuId(null); }} className="px-3 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 rounded text-left">
                                     <Trash2 className="w-4 h-4" /> Delete

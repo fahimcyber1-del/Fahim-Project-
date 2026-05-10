@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TestRequest } from './types';
 import { Clock, FileText, CheckCircle, Activity, ArrowRight } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, XAxis, Tooltip, YAxis } from 'recharts';
@@ -20,6 +20,32 @@ const trendData = [
 
 export function TestingDashboard({ records, onViewList }: TestingDashboardProps) {
 
+  const stats = useMemo(() => {
+    const active = records.filter(r => r.status === 'IN-PROGRESS').length;
+    const pending = records.filter(r => r.status === 'PENDING').length;
+    const completed = records.filter(r => r.status === 'COMPLETED' || r.status === 'FAILED').length;
+    const passed = records.filter(r => r.overallResult === 'PASS').length;
+    
+    const passRate = completed > 0 ? ((passed / completed) * 100).toFixed(1) : '0.0';
+    
+    // Simulate lab utilization based on active tests
+    const utilization = Math.min(100, Math.max(0, 40 + (active * 5)));
+
+    return {
+      active,
+      pending,
+      passRate,
+      utilization
+    };
+  }, [records]);
+
+  // Priority Queue: first 5 records that are priority
+  const priorityQueue = useMemo(() => {
+    return records
+      .filter(r => r.status === 'PENDING' || r.status === 'IN-PROGRESS' || r.priorityLevel === 'Urgent' || r.priorityLevel === 'Critical')
+      .slice(0, 5);
+  }, [records]);
+
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       
@@ -29,10 +55,10 @@ export function TestingDashboard({ records, onViewList }: TestingDashboardProps)
             <h3 className="text-xs font-bold text-slate-500 tracking-wider">ACTIVE TESTS</h3>
             <Clock className="w-5 h-5 text-blue-600" />
           </div>
-          <p className="text-4xl font-bold text-slate-800">142</p>
+          <p className="text-4xl font-bold text-slate-800">{stats.active}</p>
           <div className="mt-4 flex items-center gap-2 text-xs">
-            <span className="font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">↗ 12%</span>
-            <span className="text-slate-500 font-medium">vs last shift</span>
+            <span className="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">Current</span>
+            <span className="text-slate-500 font-medium">In lab processing</span>
           </div>
         </div>
 
@@ -41,10 +67,14 @@ export function TestingDashboard({ records, onViewList }: TestingDashboardProps)
             <h3 className="text-xs font-bold text-slate-500 tracking-wider">PENDING REPORTS</h3>
             <FileText className="w-5 h-5 text-slate-400" />
           </div>
-          <p className="text-4xl font-bold text-slate-800">28</p>
+          <p className="text-4xl font-bold text-slate-800">{stats.pending}</p>
           <div className="mt-4 flex items-center gap-2 text-xs">
-            <span className="font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">↘ 4</span>
-            <span className="text-slate-500 font-medium">critical threshold: 10</span>
+            {stats.pending > 10 ? (
+              <span className="font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">High Vol</span>
+            ) : (
+              <span className="font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Normal</span>
+            )}
+            <span className="text-slate-500 font-medium">awaiting review</span>
           </div>
         </div>
 
@@ -53,9 +83,9 @@ export function TestingDashboard({ records, onViewList }: TestingDashboardProps)
             <h3 className="text-xs font-bold text-slate-500 tracking-wider">PASS RATE</h3>
             <CheckCircle className="w-5 h-5 text-amber-700" />
           </div>
-          <p className="text-4xl font-bold text-slate-800">98.4%</p>
+          <p className="text-4xl font-bold text-slate-800">{stats.passRate}%</p>
           <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5">
-            <div className="bg-blue-800 h-1.5 rounded-full" style={{ width: '98.4%' }}></div>
+            <div className="bg-blue-800 h-1.5 rounded-full" style={{ width: `${stats.passRate}%` }}></div>
           </div>
         </div>
 
@@ -64,10 +94,10 @@ export function TestingDashboard({ records, onViewList }: TestingDashboardProps)
             <h3 className="text-xs font-bold text-slate-500 tracking-wider">LAB UTILIZATION</h3>
             <Activity className="w-5 h-5 text-slate-600" />
           </div>
-          <p className="text-4xl font-bold text-slate-800">76%</p>
+          <p className="text-4xl font-bold text-slate-800">{stats.utilization}%</p>
           <div className="mt-4 flex items-center gap-2 text-xs">
             <span className="font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">Optimal</span>
-            <span className="text-slate-500 font-medium">4/6 machines active</span>
+            <span className="text-slate-500 font-medium">machines active</span>
           </div>
         </div>
       </div>
@@ -151,42 +181,31 @@ export function TestingDashboard({ records, onViewList }: TestingDashboardProps)
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-bold text-blue-800">#TR-88204</td>
-                <td className="px-6 py-4 font-medium text-slate-700 max-w-[150px] truncate">100% Organic Cotton Twill</td>
-                <td className="px-6 py-4 text-slate-600">PO-55912</td>
-                <td className="px-6 py-4 text-slate-600">08:45 AM</td>
-                <td className="px-6 py-4 text-slate-600 font-medium">L-Main Wet Lab</td>
-                <td className="px-6 py-4"><span className="px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-xl bg-rose-100 text-rose-700 uppercase">URGENT</span></td>
-                <td className="px-6 py-4"></td>
-              </tr>
-               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-bold text-blue-800">#TR-88209</td>
-                <td className="px-6 py-4 font-medium text-slate-700 max-w-[150px] truncate">Recycled Polyester Blend</td>
-                <td className="px-6 py-4 text-slate-600">PO-55914</td>
-                <td className="px-6 py-4 text-slate-600">09:12 AM</td>
-                <td className="px-6 py-4 text-slate-600 font-medium">L-Dry Strength</td>
-                <td className="px-6 py-4"><span className="px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-xl bg-blue-100 text-blue-700 uppercase">ACTIVE</span></td>
-                <td className="px-6 py-4"></td>
-              </tr>
-               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-bold text-blue-800">#TR-88212</td>
-                <td className="px-6 py-4 font-medium text-slate-700 max-w-[150px] truncate">Indigo Dyed Denim</td>
-                <td className="px-6 py-4 text-slate-600">PO-55880</td>
-                <td className="px-6 py-4 text-slate-600">10:05 AM</td>
-                <td className="px-6 py-4 text-slate-600 font-medium">L-Main Wet Lab</td>
-                <td className="px-6 py-4"><span className="px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-xl bg-orange-100 text-orange-700 uppercase">DELAYED</span></td>
-                <td className="px-6 py-4"></td>
-              </tr>
-               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-bold text-blue-800">#TR-88215</td>
-                <td className="px-6 py-4 font-medium text-slate-700 max-w-[150px] truncate">Wool-Synthetic Mix</td>
-                <td className="px-6 py-4 text-slate-600">PO-55920</td>
-                <td className="px-6 py-4 text-slate-600">11:30 AM</td>
-                <td className="px-6 py-4 text-slate-600 font-medium">L-Chemical Testing</td>
-                <td className="px-6 py-4"><span className="px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-xl bg-slate-200 text-slate-700 uppercase">IN QUEUE</span></td>
-                <td className="px-6 py-4"></td>
-              </tr>
+              {priorityQueue.map((item) => (
+                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-bold text-blue-800">{item.id}</td>
+                  <td className="px-6 py-4 font-medium text-slate-700 max-w-[150px] truncate">{item.materialType}</td>
+                  <td className="px-6 py-4 text-slate-600">{item.batchId}</td>
+                  <td className="px-6 py-4 text-slate-600">{item.date}</td>
+                  <td className="px-6 py-4 text-slate-600 font-medium">{item.labId || 'Pending Assignment'}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-xl uppercase ${
+                      item.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
+                      item.status === 'FAILED' ? 'bg-rose-100 text-rose-700' :
+                      item.status === 'IN-PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4"></td>
+                </tr>
+              ))}
+              {priorityQueue.length === 0 && (
+                 <tr>
+                   <td colSpan={7} className="px-6 py-8 text-center text-slate-500 italic">No priority tests in queue</td>
+                 </tr>
+              )}
             </tbody>
           </table>
         </div>

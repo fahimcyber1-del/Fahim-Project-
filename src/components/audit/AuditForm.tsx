@@ -97,18 +97,36 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
   }, [initialData]);
 
   useEffect(() => {
-    if ((formData.type === 'INTERNAL' || formData.type === 'SUPPLIER') && (!formData.isoQuestions || formData.isoQuestions.length === 0)) {
-      const targetTemplate = formData.type === 'SUPPLIER' ? supplierQuestionsTemplate : isoQuestionsTemplate;
-      setFormData(prev => ({ 
-        ...prev, 
-        isoQuestions: targetTemplate.map(q => ({
-          ...q,
-          evaluation: null,
-          evidence: ''
-        }))
-      }));
+    // Only automatically populate template if we are not editing an existing record with questions
+    // OR if the user just switched the type and we are still in "new record" mode without custom edits
+    if (!initialData?.isoQuestions?.length) {
+      if (formData.type === 'INTERNAL' || formData.type === 'SUPPLIER') {
+        const targetTemplate = formData.type === 'SUPPLIER' ? supplierQuestionsTemplate : isoQuestionsTemplate;
+        
+        // Check if current questions mismatch the target template roughly (to avoid wiping user answers if they type something? Actually for a new record, switching type SHOULD wipe and load new template)
+        // Let's just always load the template if we switch to these types in a new record
+        const templateIds = targetTemplate.map(t => t.id).join(',');
+        const currentIds = (formData.isoQuestions || []).map(q => q.id).join(',');
+        
+        if (templateIds !== currentIds) {
+          setFormData(prev => ({ 
+            ...prev, 
+            isoQuestions: targetTemplate.map(q => ({
+              ...q,
+              evaluation: null,
+              evidence: ''
+            })),
+            score: 0 // Reset score on type switch
+          }));
+        }
+      } else {
+        // External or Third Party might not have these questions
+        if ((formData.isoQuestions || []).length > 0) {
+          setFormData(prev => ({ ...prev, isoQuestions: [], score: 0 }));
+        }
+      }
     }
-  }, [formData.type, isoQuestionsTemplate, supplierQuestionsTemplate]);
+  }, [formData.type, isoQuestionsTemplate, supplierQuestionsTemplate, initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -123,15 +141,25 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
       // Calculate score based on answers if necessary
       let score = 0;
       let totalAssessed = 0;
+      let totalMax = 0;
       qs.forEach(q => {
         if (q.evaluation) {
-          totalAssessed++;
-          if (q.evaluation === 'OK') score += 10;
-          else if (q.evaluation === 'Minor NC') score += 5;
-          // Major NC / Critical NC = 0
+          if (prev.type === 'SUPPLIER') {
+            if (q.evaluation !== 'N/A') {
+              totalAssessed++;
+              totalMax += 2;
+              if (q.evaluation === 'YES') score += 2;
+              else if (q.evaluation === 'PARTIAL') score += 1;
+            }
+          } else {
+            totalAssessed++;
+            totalMax += 10;
+            if (q.evaluation === 'OK') score += 10;
+            else if (q.evaluation === 'MINOR NC' || q.evaluation === 'Minor NC') score += 5;
+          }
         }
       });
-      const finalScore = totalAssessed > 0 ? Math.round((score / (totalAssessed * 10)) * 100) : 0;
+      const finalScore = totalMax > 0 ? Math.round((score / totalMax) * 100) : 0;
 
       return { ...prev, isoQuestions: qs, score: finalScore };
     });
@@ -280,10 +308,21 @@ export function AuditForm({ initialData, isoQuestionsTemplate = [], supplierQues
                             className="w-full px-3 py-1.5 border border-slate-300 rounded text-sm bg-white"
                           >
                             <option value="">Select Evaluation...</option>
-                            <option value="CRITICAL NC">Critical NC</option>
-                            <option value="MAJOR NC">Major NC</option>
-                            <option value="MINOR NC">Minor NC</option>
-                            <option value="OK">OK</option>
+                            {formData.type === 'SUPPLIER' ? (
+                              <>
+                                <option value="YES">YES</option>
+                                <option value="PARTIAL">PARTIAL</option>
+                                <option value="NO">NO</option>
+                                <option value="N/A">N/A</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="CRITICAL NC">Critical NC</option>
+                                <option value="MAJOR NC">Major NC</option>
+                                <option value="MINOR NC">Minor NC</option>
+                                <option value="OK">OK</option>
+                              </>
+                            )}
                           </select>
                         </div>
                         

@@ -19,11 +19,31 @@ import {
 export function AuditModule() {
   const [viewState, setViewState] = useState<ViewState>({ type: "dashboard" });
   const { audits: records, setAudits: setRecords } = useAuditsState();
-  const [isoQs, setIsoQs] =
-    useState<IsoQuestionTemplate[]>(defaultIsoQuestions);
-  const [supplierQs, setSupplierQs] = useState<IsoQuestionTemplate[]>(
-    defaultSupplierQuestions,
-  );
+  const [isoQs, setIsoQs] = useState<IsoQuestionTemplate[]>(() => {
+    try {
+      const saved = localStorage.getItem('audit_iso_questions');
+      return saved ? JSON.parse(saved) : defaultIsoQuestions;
+    } catch {
+      return defaultIsoQuestions;
+    }
+  });
+
+  const [supplierQs, setSupplierQs] = useState<IsoQuestionTemplate[]>(() => {
+    try {
+      const saved = localStorage.getItem('audit_supplier_questions');
+      return saved ? JSON.parse(saved) : defaultSupplierQuestions;
+    } catch {
+      return defaultSupplierQuestions;
+    }
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('audit_iso_questions', JSON.stringify(isoQs));
+  }, [isoQs]);
+
+  React.useEffect(() => {
+    localStorage.setItem('audit_supplier_questions', JSON.stringify(supplierQs));
+  }, [supplierQs]);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 

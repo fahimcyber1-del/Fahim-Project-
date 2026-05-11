@@ -5,7 +5,7 @@ export interface IsoQuestionTemplate {
 }
 
 export interface IsoQuestion extends IsoQuestionTemplate {
-  evaluation: 'Critical NC' | 'Major NC' | 'Minor NC' | 'OK' | null;
+  evaluation: string | null;
   evidence: string;
   image?: string;
 }

@@ -348,7 +348,11 @@ export function AppearanceSettings() {
                   <option value="glassmorphism">Glassmorphism</option>
                   <option value="cyberpunk">Cyberpunk</option>
                   <option value="neumorphism">Neumorphism</option>
+                  <option value="claymorphism">Claymorphism</option>
+                  <option value="aurora">Holographic Aurora</option>
                   <option value="terminal">Retro Terminal</option>
+                  <option value="synthwave">Retro Synthwave</option>
+                  <option value="blueprint">Technical Blueprint</option>
                   <option value="playful">Clean & Colorful</option>
                   <option value="vibrant">Vibrant Minimal</option>
                   <option value="industry">Industry Level (Live Animation)</option>

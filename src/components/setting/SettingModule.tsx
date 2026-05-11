@@ -56,10 +56,10 @@ export function SettingModule({ navigationPayload, onNavigationHandled }: { navi
     { id: 'integrations', label: 'Integrations', icon: Webhook },
   ];
 
-  const tabs = isSuperAdmin ? allTabs : allTabs.filter(t => t.id === 'profile');
+  const tabs = isSuperAdmin ? allTabs : allTabs.filter(t => t.id === 'profile' || t.id === 'appearance');
 
   React.useEffect(() => {
-    if (!isSuperAdmin && activeTab !== 'profile') {
+    if (!isSuperAdmin && activeTab !== 'profile' && activeTab !== 'appearance') {
       setActiveTab('profile');
     }
   }, [isSuperAdmin, activeTab]);

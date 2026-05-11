@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AuditRecord } from './types';
 import { ArrowLeft, Edit3, ClipboardList, MapPin, Calendar, Clock, AlertTriangle, Download, Building } from 'lucide-react';
 import { FileViewer } from '../inspection/FileViewer';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -374,32 +374,73 @@ export function AuditDetail({ record, onBack }: AuditDetailProps) {
           </div>
 
           {(record.type === 'INTERNAL' || record.type === 'SUPPLIER') && record.isoQuestions && record.isoQuestions.length > 0 && (() => {
-            const evaluationCounts = {
-              'OK': 0,
-              'Minor NC': 0,
-              'Major NC': 0,
-              'Critical NC': 0,
-              'Not Assessed': 0
-            };
-            record.isoQuestions.forEach(q => {
-              if (q.evaluation === 'OK') evaluationCounts['OK']++;
-              else if (q.evaluation === 'Minor NC' || (q.evaluation as string) === 'MINOR NC') evaluationCounts['Minor NC']++;
-              else if (q.evaluation === 'Major NC' || (q.evaluation as string) === 'MAJOR NC') evaluationCounts['Major NC']++;
-              else if (q.evaluation === 'Critical NC' || (q.evaluation as string) === 'CRITICAL NC') evaluationCounts['Critical NC']++;
-              else evaluationCounts['Not Assessed']++;
-            });
-
-            const chartData = [
-              { name: 'OK', value: evaluationCounts['OK'], color: '#10b981' }, // emerald-500
-              { name: 'Minor NC', value: evaluationCounts['Minor NC'], color: '#f59e0b' }, // amber-500
-              { name: 'Major NC', value: evaluationCounts['Major NC'], color: '#f43f5e' }, // rose-500
-              { name: 'Critical NC', value: evaluationCounts['Critical NC'], color: '#9f1239' } // rose-800
-            ].filter(d => d.value > 0);
+            const isSupplier = record.type === 'SUPPLIER';
+            let chartData: any[] = [];
+            let evaluationCounts: Record<string, number> = {};
+            let supplierChartData: any[] = [];
+            
+            if (isSupplier) {
+              const sections = ['Section-A: Supplier Background', 'Section-B: Social Compliance', 'Section-C: Quality System', 'Section-D: Security System'];
+              
+              sections.forEach(section => {
+                const secQs = record.isoQuestions!.filter(q => q.clause === section);
+                const total = secQs.length;
+                const naCount = secQs.filter(q => q.evaluation === 'N/A').length;
+                const applicable = total - naCount;
+                const yesCount = secQs.filter(q => q.evaluation === 'YES').length;
+                const partialCount = secQs.filter(q => q.evaluation === 'PARTIAL').length;
+                const noCount = secQs.filter(q => q.evaluation === 'NO').length;
+                
+                let score = 0;
+                secQs.forEach(q => {
+                  if (q.evaluation === 'YES') score += 2;
+                  else if (q.evaluation === 'PARTIAL') score += 1;
+                });
+                
+                const resultPercent = applicable > 0 ? Math.round((score / (applicable * 2)) * 100) : 0;
+                
+                supplierChartData.push({
+                  name: section.split(':')[0], // e.g. "Section-A"
+                  fullName: section,
+                  Total: total,
+                  NA: naCount,
+                  Applicable: applicable,
+                  YES: yesCount,
+                  PARTIAL: partialCount,
+                  NO: noCount,
+                  ResultLabel: resultPercent,
+                  Result: resultPercent
+                });
+              });
+              
+            } else {
+              evaluationCounts = {
+                'OK': 0,
+                'Minor NC': 0,
+                'Major NC': 0,
+                'Critical NC': 0,
+                'Not Assessed': 0
+              };
+              record.isoQuestions!.forEach(q => {
+                if (q.evaluation === 'OK') evaluationCounts['OK']++;
+                else if (q.evaluation === 'Minor NC' || (q.evaluation as string) === 'MINOR NC') evaluationCounts['Minor NC']++;
+                else if (q.evaluation === 'Major NC' || (q.evaluation as string) === 'MAJOR NC') evaluationCounts['Major NC']++;
+                else if (q.evaluation === 'Critical NC' || (q.evaluation as string) === 'CRITICAL NC') evaluationCounts['Critical NC']++;
+                else evaluationCounts['Not Assessed']++;
+              });
+  
+              chartData = [
+                { name: 'OK', value: evaluationCounts['OK'], color: '#10b981' }, // emerald-500
+                { name: 'Minor NC', value: evaluationCounts['Minor NC'], color: '#f59e0b' }, // amber-500
+                { name: 'Major NC', value: evaluationCounts['Major NC'], color: '#f43f5e' }, // rose-500
+                { name: 'Critical NC', value: evaluationCounts['Critical NC'], color: '#9f1239' } // rose-800
+              ].filter(d => d.value > 0);
+            }
 
             return (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6">
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6 mb-6">
               <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-                <h3 className="text-lg font-bold text-slate-800">{record.type === 'SUPPLIER' ? 'Sub Supplier Evaluation' : 'ISO 9001:2015 Evaluation'}</h3>
+                <h3 className="text-lg font-bold text-slate-800">{isSupplier ? 'Sub Supplier Evaluation' : 'ISO 9001:2015 Evaluation'}</h3>
                 {record.score !== undefined && (
                   <div className="bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
                     <span className="text-sm font-bold text-slate-600 uppercase mr-2">Calculated Score:</span>
@@ -408,7 +449,7 @@ export function AuditDetail({ record, onBack }: AuditDetailProps) {
                 )}
               </div>
 
-              {chartData.length > 0 && (
+              {!isSupplier && chartData.length > 0 && (
                 <div className="mb-8 pt-4 border-b border-slate-100 pb-8 flex flex-col items-center">
                   <h4 className="text-sm font-bold text-slate-600 mb-4 uppercase">Evaluation Status Distribution</h4>
                   <div className="h-64 w-full max-w-md">
@@ -437,6 +478,100 @@ export function AuditDetail({ record, onBack }: AuditDetailProps) {
                 </div>
               )}
 
+              {isSupplier && supplierChartData.length > 0 && (
+                <div className="mb-8 pt-4 border-b border-slate-100 pb-8">
+                  <h4 className="text-sm font-bold text-slate-600 mb-4 uppercase">Achievement Ratio for Supplier Selection</h4>
+                  <div className="w-full overflow-x-auto mb-6">
+                    <table className="w-full min-w-[600px] border-collapse bg-white text-sm">
+                      <thead>
+                        <tr>
+                          <th className="border border-slate-300 p-2 text-left bg-[#1f3864] text-white">Evaluated Area</th>
+                          <th className="border border-slate-300 p-2 text-center bg-[#1f3864] text-white">Total</th>
+                          <th className="border border-slate-300 p-2 text-center bg-[#1f3864] text-white">N/A</th>
+                          <th className="border border-slate-300 p-2 text-center bg-[#1f3864] text-white">Applicable</th>
+                          <th className="border border-slate-300 p-2 text-center bg-[#0ea5e9] text-white">YES</th>
+                          <th className="border border-slate-300 p-2 text-center bg-[#f59e0b] text-white">PARTIAL</th>
+                          <th className="border border-slate-300 p-2 text-center bg-[#ef4444] text-white">NO</th>
+                          <th className="border border-slate-300 p-2 text-center bg-[#0284c7] text-white">Result %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {supplierChartData.map(row => (
+                          <tr key={row.name}>
+                            <td className="border border-slate-300 p-2">{row.fullName}</td>
+                            <td className="border border-slate-300 p-2 text-center">{row.Total}</td>
+                            <td className="border border-slate-300 p-2 text-center">{row.NA}</td>
+                            <td className="border border-slate-300 p-2 text-center">{row.Applicable}</td>
+                            <td className="border border-slate-300 p-2 text-center text-sky-500 font-bold">{row.YES}</td>
+                            <td className="border border-slate-300 p-2 text-center text-amber-500 font-bold">{row.PARTIAL}</td>
+                            <td className="border border-slate-300 p-2 text-center text-rose-500 font-bold">{row.NO}</td>
+                            <td className="border border-slate-300 p-2 text-center text-slate-800 font-bold">{row.Result}%</td>
+                          </tr>
+                        ))}
+                        <tr className="bg-slate-50 font-bold">
+                          <td className="border border-slate-300 p-2 text-center text-lg">Total Questions</td>
+                          <td className="border border-slate-300 p-2 text-center">{supplierChartData.reduce((acc, r) => acc + r.Total, 0)}</td>
+                          <td className="border border-slate-300 p-2 text-center">{supplierChartData.reduce((acc, r) => acc + r.NA, 0)}</td>
+                          <td className="border border-slate-300 p-2 text-center">{supplierChartData.reduce((acc, r) => acc + r.Applicable, 0)}</td>
+                          <td className="border border-slate-300 p-2 text-center text-sky-500">{supplierChartData.reduce((acc, r) => acc + r.YES, 0)}</td>
+                          <td className="border border-slate-300 p-2 text-center text-amber-500">{supplierChartData.reduce((acc, r) => acc + r.PARTIAL, 0)}</td>
+                          <td className="border border-slate-300 p-2 text-center text-rose-500">{supplierChartData.reduce((acc, r) => acc + r.NO, 0)}</td>
+                          <td className="border border-slate-300 p-2 text-center text-slate-800">{
+                            Math.round(
+                              ((supplierChartData.reduce((acc, r) => acc + r.YES, 0) * 2 + supplierChartData.reduce((acc, r) => acc + r.PARTIAL, 0)) / 
+                              (supplierChartData.reduce((acc, r) => acc + r.Applicable, 0) * 2) || 0) * 100
+                            )
+                          }%</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={6} className="border border-slate-300 p-2 text-center font-bold text-lg">Achievement Ratio for Supplier Selection</td>
+                          <td colSpan={2} className={`border border-slate-300 p-2 text-center font-bold text-lg text-white ${
+                            Math.round(
+                              ((supplierChartData.reduce((acc, r) => acc + r.YES, 0) * 2 + supplierChartData.reduce((acc, r) => acc + r.PARTIAL, 0)) / 
+                              (supplierChartData.reduce((acc, r) => acc + r.Applicable, 0) * 2) || 0) * 100
+                            ) >= 80 ? 'bg-emerald-500' :
+                            Math.round(
+                              ((supplierChartData.reduce((acc, r) => acc + r.YES, 0) * 2 + supplierChartData.reduce((acc, r) => acc + r.PARTIAL, 0)) / 
+                              (supplierChartData.reduce((acc, r) => acc + r.Applicable, 0) * 2) || 0) * 100
+                            ) >= 60 ? 'bg-amber-500' : 'bg-rose-500'
+                          }`}>
+                            {Math.round(
+                              ((supplierChartData.reduce((acc, r) => acc + r.YES, 0) * 2 + supplierChartData.reduce((acc, r) => acc + r.PARTIAL, 0)) / 
+                              (supplierChartData.reduce((acc, r) => acc + r.Applicable, 0) * 2) || 0) * 100
+                            ) >= 80 ? 'SELECTED' :
+                            Math.round(
+                              ((supplierChartData.reduce((acc, r) => acc + r.YES, 0) * 2 + supplierChartData.reduce((acc, r) => acc + r.PARTIAL, 0)) / 
+                              (supplierChartData.reduce((acc, r) => acc + r.Applicable, 0) * 2) || 0) * 100
+                            ) >= 60 ? 'ON-PROGRESS' : 'REJECTED'}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={supplierChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="left" axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="right" orientation="right" domain={[0, 100]} axisLine={false} tickLine={false} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar yAxisId="left" dataKey="Total" name="Total Question" fill="#60a5fa" barSize={20} />
+                        <Bar yAxisId="left" dataKey="NA" name="NO. of N/A" fill="#f97316" barSize={20} />
+                        <Bar yAxisId="left" dataKey="Applicable" name="Applicable Question" fill="#94a3b8" barSize={20} />
+                        <Bar yAxisId="left" dataKey="YES" name="YES" fill="#eab308" barSize={20} />
+                        <Bar yAxisId="left" dataKey="PARTIAL" name="PARTIAL" fill="#3b82f6" barSize={20} />
+                        <Bar yAxisId="left" dataKey="NO" name="NO" fill="#22c55e" barSize={20} />
+                        <Line yAxisId="right" type="monotone" dataKey="Result" name="Result %" stroke="#0ea5e9" strokeWidth={3} dot={{ r: 6, fill: '#0ea5e9' }}>
+                        </Line>
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
                 {record.isoQuestions.map(q => (
                   <div key={q.id} className="p-4 border border-slate-200 rounded-lg bg-slate-50">
@@ -451,10 +586,15 @@ export function AuditDetail({ record, onBack }: AuditDetailProps) {
                           <div>
                             <p className="text-[10px] font-bold text-slate-500 uppercase">Evaluation</p>
                             <p className={`text-sm font-bold mt-0.5 ${
-                              q.evaluation === 'OK' ? 'text-emerald-600' : 
-                              q.evaluation === 'Minor NC' ? 'text-amber-600' :
-                              (q.evaluation === 'Major NC' || q.evaluation === 'Critical NC') ? 'text-rose-600' :
-                              'text-slate-600'
+                              isSupplier
+                              ? (q.evaluation === 'YES' ? 'text-emerald-600' :
+                                 q.evaluation === 'PARTIAL' ? 'text-amber-500' :
+                                 q.evaluation === 'NO' ? 'text-rose-600' :
+                                 'text-slate-600')
+                              : (q.evaluation === 'OK' ? 'text-emerald-600' : 
+                                 q.evaluation === 'Minor NC' ? 'text-amber-600' :
+                                 (q.evaluation === 'Major NC' || q.evaluation === 'Critical NC') ? 'text-rose-600' :
+                                 'text-slate-600')
                             }`}>{q.evaluation || 'Not Assessed'}</p>
                           </div>
                           <div>

@@ -261,7 +261,7 @@ export function Dashboard() {
 
   return (
     <motion.div 
-      className="flex flex-col gap-4 sm:p-6 lg:p-8 w-full pb-8"
+      className="flex flex-col gap-6 sm:p-6 lg:p-8 w-full pb-8"
       variants={containerVariants}
       initial="hidden"
       animate="show"
@@ -364,7 +364,7 @@ export function Dashboard() {
             <CardTitle>Defect Volume Trend</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
-            <div className="h-[280px] w-full mt-4">
+            <div className="h-[220px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={defectTrendData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
                   <defs>
@@ -379,6 +379,7 @@ export function Dashboard() {
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     itemStyle={{ color: '#0f172a', fontWeight: 'bold' }}
+                    formatter={(value: any) => [value, 'Defects']}
                   />
                   <Area 
                     type="monotone" 
@@ -406,15 +407,15 @@ export function Dashboard() {
                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Average RFT</p>
                </div>
             </div>
-            <div className="h-[250px] w-full mt-4">
+            <div className="h-[200px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={rftRateData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
-                    outerRadius={90}
+                    innerRadius={60}
+                    outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
@@ -441,7 +442,7 @@ export function Dashboard() {
             <CardTitle>Production Volume vs RFT Rate</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
-            <div className="h-[300px] w-full mt-4">
+            <div className="h-[220px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={prodTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -451,6 +452,10 @@ export function Dashboard() {
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     itemStyle={{ color: '#0f172a', fontWeight: 'bold' }}
+                    formatter={(value: any, name: string) => [
+                      name === 'RFT Rate (%)' ? `${Number(value).toFixed(1)}%` : Number(value).toLocaleString(),
+                      name
+                    ]}
                   />
                   <Legend verticalAlign="bottom" height={36} formatter={(value) => <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{value}</span>} />
                   <Bar yAxisId="left" dataKey="inspected" name="Inspected" fill="#e2e8f0" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -467,7 +472,7 @@ export function Dashboard() {
             <CardTitle>Quality Categories Scan</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center flex-col items-center flex-1">
-            <div className="h-[300px] w-full">
+            <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
                   <PolarGrid stroke="#e2e8f0" />
@@ -476,7 +481,8 @@ export function Dashboard() {
                   <Radar name="Pass Score" dataKey="score" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
                   <Tooltip 
                     contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    itemStyle={{ color: '#0f172a', fontWeight: 'bold' }} 
+                    itemStyle={{ color: '#0f172a', fontWeight: 'bold' }}
+                    formatter={(value: any) => [`${value}%`, 'Pass Score']}
                   />
                 </RadarChart>
               </ResponsiveContainer>
@@ -489,13 +495,13 @@ export function Dashboard() {
             <CardTitle>Defect Distribution by Type</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
-            <div className="h-[250px] w-full mt-4">
+            <div className="h-[200px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={defectTypesData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
                   <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 'bold'}} />
                   <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#475569', fontSize: 10, fontWeight: 'bold'}} width={120} />
-                  <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} itemStyle={{ color: '#0f172a', fontWeight: 'bold' }} />
+                  <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', color: '#0f172a', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} itemStyle={{ color: '#0f172a', fontWeight: 'bold' }} formatter={(value: any) => [value, 'Count']} />
                   <Bar dataKey="count" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>

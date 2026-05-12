@@ -15,6 +15,8 @@ export interface AppearanceState {
   uiStyle: string;
   hideTopbar: boolean;
   uiSize: string;
+  spacingMode: string;
+  dashboardStyle: string;
 }
 
 const defaultState: AppearanceState = {
@@ -29,7 +31,9 @@ const defaultState: AppearanceState = {
   fontStyle: 'inter',
   uiStyle: 'default',
   hideTopbar: false,
-  uiSize: 'default'
+  uiSize: 'default',
+  spacingMode: 'default',
+  dashboardStyle: 'default'
 };
 
 interface AppearanceContextType {
@@ -84,6 +88,8 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
     document.documentElement.setAttribute('data-topbar-style', settings.topbarStyle);
     document.documentElement.setAttribute('data-card-style', settings.cardStyle);
     document.documentElement.setAttribute('data-ui-style', settings.uiStyle);
+    document.documentElement.setAttribute('data-spacing-mode', settings.spacingMode);
+    document.documentElement.setAttribute('data-dashboard-style', settings.dashboardStyle);
   }, [settings]);
 
   const getFontClass = () => {

@@ -157,7 +157,7 @@ export function TestDetail({ record, onBack, onEdit }: TestDetailProps) {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto flex flex-col h-full space-y-6">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto flex flex-col h-full space-y-6 overflow-y-auto w-full">
       {fullscreenImage && (
         <DocumentViewerModal
           type="image"

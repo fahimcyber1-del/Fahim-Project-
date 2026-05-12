@@ -1,5 +1,9 @@
 export interface TraceabilityRecord {
   id: string;
+  poNumber?: string;
+  styleNumber?: string;
+  orderQuantity?: number;
+  productImage?: string;
   productBatchNo: string;
   type: 'YARN' | 'FABRIC' | 'GARMENT';
   status: 'VERIFIED' | 'IN_PROGRESS' | 'FAILED' | 'PENDING';

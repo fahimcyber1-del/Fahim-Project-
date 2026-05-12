@@ -21,6 +21,8 @@ export function CapaList({ records, onView, onEdit, onDelete, onNew }: CapaListP
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,6 +43,13 @@ export function CapaList({ records, onView, onEdit, onDelete, onNew }: CapaListP
     const matchesSeverity = severityFilter === 'All' || record.severity === severityFilter;
     return matchesSearch && matchesStatus && matchesSeverity;
   });
+
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+  const paginatedRecords = filteredRecords.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, severityFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -109,9 +118,8 @@ export function CapaList({ records, onView, onEdit, onDelete, onNew }: CapaListP
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
-      <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
-        <h2 className="text-lg font-bold text-slate-900">Corrective & Preventive Actions</h2>
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+      <div className="border-b border-slate-200 px-4 py-3 flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4 bg-white shrink-0">
         <div className="flex flex-wrap items-center gap-2">
             <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -140,7 +148,7 @@ export function CapaList({ records, onView, onEdit, onDelete, onNew }: CapaListP
         </div>
       </div>
 
-      <div className="p-0 flex-1 overflow-hidden flex flex-col">
+      <div className="p-0 flex-1 flex flex-col min-h-0 bg-white">
         {isFilterOpen && (
           <div className="p-4 border-b border-slate-100 bg-slate-50 space-y-4">
             <div className="flex flex-wrap gap-4 items-end">
@@ -200,7 +208,7 @@ export function CapaList({ records, onView, onEdit, onDelete, onNew }: CapaListP
           </div>
         )}
 
-      <div className="overflow-x-auto flex-1 h-full min-h-0 relative">
+      <div className="overflow-auto flex-1 min-h-0 relative bg-white">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-slate-50 border-b border-slate-200 top-0 sticky z-10">
             <tr>
@@ -221,7 +229,7 @@ export function CapaList({ records, onView, onEdit, onDelete, onNew }: CapaListP
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
-             {filteredRecords.map(record => (
+             {paginatedRecords.map(record => (
                <tr key={record.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => onView(record.id)}>
                  <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                    <input 
@@ -304,8 +312,44 @@ export function CapaList({ records, onView, onEdit, onDelete, onNew }: CapaListP
         </table>
       </div>
       </div>
-      <div className="p-4 border-t border-slate-200 bg-slate-50 text-xs font-medium text-slate-500 flex justify-between items-center">
-         <span>Showing {filteredRecords.length} of {records.length} records</span>
+      <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center z-20 gap-4 mt-auto">
+        <div className="flex items-center gap-4 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">Rows per page:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="px-2 py-1 border border-slate-300 rounded text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+          <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} entries
+          </span>
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <button 
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+            disabled={currentPage === 1} 
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-200 rounded min-w-[2rem] text-center bg-white flex items-center justify-center">
+            {currentPage}
+          </span>
+          <button 
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+            disabled={currentPage === totalPages || totalPages === 0} 
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -106,7 +106,7 @@ export function TestForm({ initialData, onSave, onCancel }: TestFormProps) {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 h-full overflow-y-auto w-full">
       
       <div className="mb-8">
         <button onClick={onCancel} className="text-sm font-bold text-[#0033a0] flex items-center gap-1 hover:underline mb-4">

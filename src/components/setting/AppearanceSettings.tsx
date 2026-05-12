@@ -358,6 +358,36 @@ export function AppearanceSettings() {
                   <option value="industry">Industry Level (Live Animation)</option>
                 </select>
               </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Spacing & Padding</label>
+                <select 
+                  value={localSettings.spacingMode || 'default'}
+                  onChange={(e) => setLocalSettings({...localSettings, spacingMode: e.target.value})}
+                  disabled={!canEdit}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-500"
+                >
+                  <option value="default">Default (Spacious)</option>
+                  <option value="compact">No Gap / Edge-to-Edge (Compact)</option>
+                  <option value="dense">Dense (Minimal padding)</option>
+                </select>
+                <p className="mt-1 text-[10px] text-slate-500">Choosing "No Gap" removes padding around modules and card spacing globally.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Dashboard Style</label>
+                <select 
+                  value={localSettings.dashboardStyle || 'default'}
+                  onChange={(e) => setLocalSettings({...localSettings, dashboardStyle: e.target.value})}
+                  disabled={!canEdit}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-500"
+                >
+                  <option value="default">Default</option>
+                  <option value="analytics">Analytics Heavy (Dense)</option>
+                  <option value="minimal">Minimal (Clean)</option>
+                  <option value="executive">Executive Summary</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>

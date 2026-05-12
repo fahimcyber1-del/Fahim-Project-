@@ -37,14 +37,7 @@ export function CustomerComplaintsModule() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Customer Complaints</h1>
-          <p className="text-sm font-medium text-slate-500 mt-1">Manage and track customer feedback, issues, and resolution actions</p>
-        </div>
-      </div>
-
-      <div className="flex gap-2 mb-6 border-b border-slate-200 pb-4 flex-shrink-0 overflow-x-auto">
+      <div className="flex gap-2 mb-2 border-b border-slate-200 pb-2 flex-shrink-0 overflow-x-auto">
         <button
           onClick={() => setViewState({ type: 'dashboard' })}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'dashboard' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}

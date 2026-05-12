@@ -442,7 +442,7 @@ export function IncomingQCDetail({ record, onNavigate }: Props) {
                         }),
                       );
                     }}
-                    className="text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline text-left"
+                    className="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline text-left bg-transparent border-none p-0 cursor-pointer inline focus:outline-none"
                   >
                     {record.poNumber}
                   </button>
@@ -474,7 +474,7 @@ export function IncomingQCDetail({ record, onNavigate }: Props) {
                         }),
                       );
                     }}
-                    className="text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline text-left"
+                    className="text-sm font-bold text-blue-600 hover:text-blue-800 hover:underline text-left bg-transparent border-none p-0 cursor-pointer inline focus:outline-none"
                   >
                     {record.style}
                   </button>

@@ -191,7 +191,7 @@ export default function App() {
           />
         )}
         
-        <main className={`flex-1 flex flex-col overflow-y-auto ${isFullscreen ? '' : 'p-4 md:p-6 lg:p-8 gap-4 md:gap-6 lg:gap-8'}`}>
+        <main className={`flex-1 flex flex-col overflow-y-auto ${isFullscreen ? '' : (settings.spacingMode === 'compact' ? 'p-0 gap-0' : settings.spacingMode === 'dense' ? 'p-2 md:p-4 gap-2 md:gap-4' : 'p-4 md:p-6 lg:p-8 gap-4 md:gap-6 lg:gap-8')}`}>
           {activeModuleId === "dashboard" ? (
             <Dashboard />
           ) : activeModuleId === "production_quality" ? (

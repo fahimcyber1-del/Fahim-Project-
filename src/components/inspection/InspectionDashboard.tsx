@@ -8,12 +8,18 @@ interface DashboardProps {
 }
 
 export function InspectionDashboard({ records }: DashboardProps) {
-  const totalInspected = records.reduce((sum, r) => sum + r.inspectedQuantity, 0);
-  const totalCritical = records.reduce((sum, r) => sum + r.criticalDefects, 0);
-  const totalMajor = records.reduce((sum, r) => sum + r.majorDefects, 0);
-  const totalMinor = records.reduce((sum, r) => sum + r.minorDefects, 0);
-  const totalShortage = records.reduce((sum, r) => sum + (r.shortage || 0), 0);
-  const totalExcess = records.reduce((sum, r) => sum + (r.excess || 0), 0);
+  const parseNumber = (val: any) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') return Number(val.replace(/,/g, '')) || 0;
+    return 0;
+  };
+
+  const totalInspected = records.reduce((sum, r) => sum + parseNumber(r.inspectedQuantity), 0);
+  const totalCritical = records.reduce((sum, r) => sum + parseNumber(r.criticalDefects), 0);
+  const totalMajor = records.reduce((sum, r) => sum + parseNumber(r.majorDefects), 0);
+  const totalMinor = records.reduce((sum, r) => sum + parseNumber(r.minorDefects), 0);
+  const totalShortage = records.reduce((sum, r) => sum + parseNumber(r.shortage), 0);
+  const totalExcess = records.reduce((sum, r) => sum + parseNumber(r.excess), 0);
   const totalDefected = totalCritical + totalMajor + totalMinor;
   const totalPassed = Math.max(0, totalInspected - totalDefected);
   const totalFailed = records.filter(r => r.status === 'Fail').length;
@@ -23,17 +29,18 @@ export function InspectionDashboard({ records }: DashboardProps) {
 
   const categoryStats = records.reduce((acc, curr) => {
     const existing = acc.find(item => item.category === curr.category);
-    const currDefects = curr.criticalDefects + curr.majorDefects + curr.minorDefects;
-    const currPassed = Math.max(0, curr.inspectedQuantity - currDefects);
+    const currDefects = parseNumber(curr.criticalDefects) + parseNumber(curr.majorDefects) + parseNumber(curr.minorDefects);
+    const currInspected = parseNumber(curr.inspectedQuantity);
+    const currPassed = Math.max(0, currInspected - currDefects);
     
     if (existing) {
-      existing.inspected += curr.inspectedQuantity;
+      existing.inspected += currInspected;
       existing.passed += currPassed;
       existing.defects += currDefects;
     } else {
       acc.push({
         category: curr.category,
-        inspected: curr.inspectedQuantity,
+        inspected: currInspected,
         passed: currPassed,
         defects: currDefects,
       });

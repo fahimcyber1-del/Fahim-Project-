@@ -189,7 +189,7 @@ export function IncomingQCForm({ onNavigate, onSubmit, initialData }: Props) {
     // Auto-fill style based on PO number selection if it's currently empty or mismatches
     if (formData.poNumber && orders.length > 0) {
       const selectedOrder = orders.find(
-        (o) => o.poArticleNumber === formData.poNumber,
+        (o) => o.poArticleNumber === formData.poNumber || (o.poDetails && o.poDetails.some(pod => pod.poArticleNumber === formData.poNumber))
       );
       if (selectedOrder && selectedOrder.styleNumber) {
         if (formData.style !== selectedOrder.styleNumber) {
@@ -458,7 +458,10 @@ export function IncomingQCForm({ onNavigate, onSubmit, initialData }: Props) {
                 />
                 {orders.length > 0 && (
                   <datalist id="po-suggestions">
-                    {Array.from(new Set(orders.map((o) => o.poArticleNumber)))
+                    {Array.from(new Set(orders.flatMap((o) => [
+                      o.poArticleNumber, 
+                      ...(o.poDetails?.map(pod => pod.poArticleNumber) || [])
+                    ])))
                       .filter(Boolean)
                       .map((po) => (
                         <option key={po} value={po} />

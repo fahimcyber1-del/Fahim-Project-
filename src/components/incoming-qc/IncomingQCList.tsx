@@ -174,7 +174,7 @@ export function IncomingQCList({
 
   return (
     <div className="h-full flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-      <div className="p-4 lg:p-6 border-b border-slate-200 bg-slate-50 flex flex-col gap-4">
+      <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col gap-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-xl font-black text-slate-900 tracking-tight">
@@ -184,8 +184,28 @@ export function IncomingQCList({
               Manage inspections for raw materials
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center bg-slate-200 p-1 rounded-lg mr-2 shrink-0">
+          <div className="flex items-center flex-wrap gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64 min-w-[200px]">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-3 py-2 border rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${showFilters ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline">Filter</span>
+            </button>
+            
+            <div className="w-px h-6 bg-slate-300 mx-1 hidden sm:block"></div>
+
+            <div className="flex items-center bg-slate-200 p-1 rounded-lg shrink-0">
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700"}`}
@@ -203,35 +223,15 @@ export function IncomingQCList({
             </div>
             <button
               onClick={() => handleOpenExportModal()}
-              className="px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-100 flex items-center gap-2"
+              className="px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-100 flex items-center gap-2 shrink-0"
             >
-              <Download className="w-4 h-4" /> Export
+              <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export</span>
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by ID or Supplier..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`px-3 py-2 border rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${showFilters ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"}`}
-          >
-            <Filter className="w-4 h-4" />
-            Filter
-          </button>
-        </div>
-
         {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white border border-slate-200 rounded-lg mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border border-slate-200 rounded-lg mt-2">
             <div>
               <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
                 Category
@@ -261,21 +261,6 @@ export function IncomingQCList({
                     {s}
                   </option>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
-                Show
-              </label>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500"
-              >
-                <option value={10}>10 per page</option>
-                <option value={20}>20 per page</option>
-                <option value={50}>50 per page</option>
-                <option value={100}>100 per page</option>
               </select>
             </div>
           </div>
@@ -663,47 +648,50 @@ export function IncomingQCList({
         )}
       </div>
 
-      <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between text-sm">
-        <div className="flex items-center gap-2 text-slate-600">
-          <span>Show</span>
-          <select
-            className="border-slate-300 rounded px-2 py-1 focus:outline-none focus:border-indigo-500 bg-slate-50"
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-          >
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={80}>80</option>
-            <option value={100}>100</option>
-          </select>
-          <span>per page</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-slate-500">
+      <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center z-20 gap-4 mt-auto">
+        <div className="flex items-center gap-4 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">Rows per page:</span>
+            <select
+              className="px-2 py-1 border border-slate-300 rounded text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={80}>80</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+          <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
             Showing{" "}
             {Math.min((currentPage - 1) * itemsPerPage + 1, filtered.length)} to{" "}
             {Math.min(currentPage * itemsPerPage, filtered.length)} of{" "}
             {filtered.length} entries
           </span>
-          <div className="flex items-center gap-1">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 disabled:opacity-50 hover:bg-slate-50"
-            >
-              Prev
-            </button>
-            <button
-              disabled={currentPage === totalPages || totalPages === 0}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-3 py-1 border border-slate-200 rounded bg-white text-slate-600 disabled:opacity-50 hover:bg-slate-50"
-            >
-              Next
-            </button>
-          </div>
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-200 rounded min-w-[2rem] text-center bg-white flex items-center justify-center">
+            {currentPage}
+          </span>
+          <button
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage((p) => p + 1)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
+          >
+            Next
+          </button>
         </div>
       </div>
       {showExportModal && (

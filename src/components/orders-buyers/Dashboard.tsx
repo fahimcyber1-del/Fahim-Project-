@@ -41,9 +41,15 @@ export function Dashboard({ buyers, orders }: DashboardProps) {
   // Note: Only considering orders within date range, but active buyers computation might still reflect total if we only filter orders.
   // We'll keep activebuyers as global since buyers don't have a date filter right now. Or we can show buyers that have orders in this range.
   // I will just use the global buyers for activeBuyers, but for Top Buyers I will use filteredOrders.
+  const parseNumber = (val: any) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') return Number(val.replace(/,/g, '')) || 0;
+    return 0;
+  };
+
   const activeBuyers = buyers.filter(b => b.status === 'Active').length;
-  const totalVolume = filteredOrders.reduce((sum, order) => sum + order.quantity, 0);
-  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const totalVolume = filteredOrders.reduce((sum, order) => sum + parseNumber(order.quantity), 0);
+  const totalRevenue = filteredOrders.reduce((sum, order) => sum + parseNumber(order.totalAmount), 0);
 
   const pendingOrders = filteredOrders.filter(o => o.status === 'Pending').length;
   const inProductionOrders = filteredOrders.filter(o => o.status === 'In Production').length;
@@ -177,7 +183,7 @@ export function Dashboard({ buyers, orders }: DashboardProps) {
           <div className="flex-1 space-y-4">
             {buyers.slice(0, 5).map(buyer => {
               const buyerOrders = filteredOrders.filter(o => o.buyerId === buyer.id);
-              const buyerVolume = buyerOrders.reduce((sum, o) => sum + o.quantity, 0);
+              const buyerVolume = buyerOrders.reduce((sum, o) => sum + parseNumber(o.quantity), 0);
               const volumePercentage = totalVolume > 0 ? ((buyerVolume / totalVolume) * 100).toFixed(1) : '0.0';
 
               if (buyerVolume === 0 && dateFilter !== 'all') return null; // Don't show buyers with 0 volume in the filtered range if there is a filter

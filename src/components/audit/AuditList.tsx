@@ -182,12 +182,8 @@ export function AuditList({ audits, onView, onEdit, onDelete, onCreate }: AuditL
   };
 
   return (
-    <div className="border border-slate-200 bg-white rounded-lg shadow-sm">
-      <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Audit Records</h2>
-          <p className="text-sm font-medium text-slate-500 mt-0.5">Manage and view all audits</p>
-        </div>
+    <div className="border border-slate-200 bg-white rounded-lg shadow-sm h-full flex-1 flex flex-col min-h-0">
+      <div className="border-b border-slate-200 px-4 py-3 flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4 shrink-0">
         <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded transition-colors"><Filter className="w-4 h-4" /> Filters {isFilterOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</button>
             <button onClick={() => handleExportClick()} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded transition-colors"><Download className="w-4 h-4" /> Export Report</button>
@@ -200,25 +196,16 @@ export function AuditList({ audits, onView, onEdit, onDelete, onCreate }: AuditL
           <div className="flex gap-4 items-end">
             <div className="flex-1">
               <label className="block text-xs font-semibold text-slate-600 mb-1">Search</label>
-              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500" />
             </div>
-            <div className="w-32">
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Items per Page</label>
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className="w-full px-3 py-2 border border-slate-300 rounded text-sm text-slate-700">
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
+            {selectedIds.size > 0 && <button onClick={handleDeleteSelected} className="mt-2 flex items-center gap-1 px-3 py-2 bg-rose-100 text-rose-700 text-xs font-semibold rounded h-[38px]"><Trash2 className="w-3 h-3" /> Delete ({selectedIds.size})</button>}
           </div>
-          {selectedIds.size > 0 && <button onClick={handleDeleteSelected} className="mt-2 flex items-center gap-1 px-2 py-1 bg-rose-100 text-rose-700 text-xs font-semibold rounded"><Trash2 className="w-3 h-3" /> Delete ({selectedIds.size})</button>}
         </div>
       )}
 
-      <div className="overflow-x-auto min-h-[400px] pb-48">
+      <div className="overflow-auto flex-1 min-h-0 bg-white">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
             <tr>
               <th className="px-4 py-3 w-10"><input type="checkbox" checked={selectedIds.size === paginatedAudits.length && paginatedAudits.length > 0} onChange={toggleSelectAll} className="rounded border-slate-300"/></th>
               <th className="px-4 py-3 font-semibold text-slate-600">Audit ID</th>
@@ -270,16 +257,45 @@ export function AuditList({ audits, onView, onEdit, onDelete, onCreate }: AuditL
         </table>
       </div>
       
-      {totalPages > 1 && (
-        <div className="p-4 border-t flex justify-between items-center text-xs">
-          <span>Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAudits.length)} of {filteredAudits.length}</span>
-          <div className="flex gap-1">
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1 border rounded"><ChevronLeft className="w-4 h-4"/></button>
-            <span className="px-2">{currentPage}</span>
-            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1 border rounded"><ChevronRight className="w-4 h-4"/></button>
+      <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center z-20 gap-4 mt-auto">
+        <div className="flex items-center gap-4 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">Rows per page:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="px-2 py-1 border border-slate-300 rounded text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
           </div>
+          <span className="text-xs font-medium text-slate-500 whitespace-nowrap">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAudits.length)} of {filteredAudits.length} entries
+          </span>
         </div>
-      )}
+        <div className="flex gap-1 shrink-0">
+          <button 
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+            disabled={currentPage === 1} 
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-200 rounded min-w-[2rem] text-center bg-white flex items-center justify-center">
+            {currentPage}
+          </span>
+          <button 
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+            disabled={currentPage === totalPages || totalPages === 0} 
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
       {confirmDelete.ids && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50">

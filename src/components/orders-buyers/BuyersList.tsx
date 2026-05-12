@@ -84,8 +84,14 @@ export function BuyersList({ buyers, orders, onSave, onDelete }: BuyersListProps
     setSelectedIds(newSelect);
   };
 
+  const parseNumber = (val: any) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') return Number(val.replace(/,/g, '')) || 0;
+    return 0;
+  };
+
   const totalQuantityPerBuyer = (buyerId: string) => {
-    return orders.filter(o => o.buyerId === buyerId).reduce((sum, o) => sum + o.quantity, 0);
+    return orders.filter(o => o.buyerId === buyerId).reduce((sum, o) => sum + parseNumber(o.quantity), 0);
   };
 
   const totalOrdersPerBuyer = (buyerId: string) => {

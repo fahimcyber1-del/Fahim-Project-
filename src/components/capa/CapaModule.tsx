@@ -36,36 +36,29 @@ export function CapaModule() {
     : undefined;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between mb-6 flex-shrink-0">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Corrective & Preventive Action (CAPA)</h1>
-          <p className="text-sm font-medium text-slate-500 mt-1">Investigate, resolve, and prevent recurring quality issues</p>
-        </div>
-      </div>
-
-      <div className="flex gap-2 mb-6 border-b border-slate-200 pb-4 flex-shrink-0 overflow-x-auto">
+    <div className={`w-full h-full flex flex-col overflow-hidden p-4 bg-slate-50/50`}>
+      <div className="flex bg-white rounded-lg p-1 border border-slate-200 mb-3 shrink-0 w-fit">
         <button
           onClick={() => setViewState({ type: 'dashboard' })}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'dashboard' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'dashboard' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
         >
           <LayoutDashboard className="w-4 h-4" /> Dashboard
         </button>
         <button
           onClick={() => setViewState({ type: 'list' })}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'list' || viewState.type === 'detail' ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'list' || viewState.type === 'detail' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
         >
           <List className="w-4 h-4" /> All CAPAs
         </button>
         <button
           onClick={() => setViewState({ type: 'form' })}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'form' && !viewState.recordId ? 'bg-indigo-50 text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${viewState.type === 'form' && !viewState.recordId ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
         >
           <PlusCircle className="w-4 h-4" /> Raise CAPA
         </button>
       </div>
 
-      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+      <div className={`flex-1 w-full relative ${viewState.type === 'list' ? 'overflow-hidden flex flex-col min-h-0' : 'overflow-y-auto'}`}>
         {viewState.type === 'dashboard' && <CapaDashboard records={records} />}
         {viewState.type === 'list' && (
           <CapaList 

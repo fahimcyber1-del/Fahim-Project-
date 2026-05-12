@@ -236,19 +236,6 @@ export function CustomerComplaintsList({ records, onView, onEdit, onDelete, onNe
                   <option value="Custom">Custom Range</option>
                 </select>
               </div>
-              <div className="flex-1 min-w-[150px]">
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Items per Page</label>
-                <select 
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
               {dateFilter === 'Custom' && (
                 <div className="flex-1 min-w-[250px] flex items-end gap-2">
                   <div className="flex-1">
@@ -287,7 +274,7 @@ export function CustomerComplaintsList({ records, onView, onEdit, onDelete, onNe
           </div>
         )}
 
-      <div className="overflow-x-auto flex-1 h-full min-h-[400px] pb-48 relative">
+      <div className="overflow-x-auto flex-1 min-h-0 relative">
         <table className="w-full text-left text-sm whitespace-nowrap">
           <thead className="bg-slate-50 border-b border-slate-200 top-0 sticky z-10">
             <tr>
@@ -389,27 +376,42 @@ export function CustomerComplaintsList({ records, onView, onEdit, onDelete, onNe
         </table>
       </div>
       </div>
-    <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
-        <span className="text-xs font-medium text-slate-500">
-          Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} entries
-        </span>
+    <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center z-20">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600">Rows per page:</span>
+            <select 
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="px-2 py-1 border border-slate-300 rounded text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+          <span className="text-xs font-medium text-slate-500">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredRecords.length)} of {filteredRecords.length} entries
+          </span>
+        </div>
         <div className="flex gap-1">
           <button 
             onClick={(e) => { e.stopPropagation(); setCurrentPage(p => Math.max(1, p - 1)); }}
             disabled={currentPage === 1}
-            className="p-1.5 rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" /> Previous
           </button>
-          <span className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-200 rounded min-w-[2rem] text-center bg-white">
+          <span className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-200 rounded min-w-[2rem] text-center bg-white flex items-center justify-center">
             {currentPage}
           </span>
           <button 
             onClick={(e) => { e.stopPropagation(); setCurrentPage(p => Math.min(totalPages, p + 1)); }}
-            disabled={currentPage === totalPages}
-            className="p-1.5 rounded border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="flex items-center gap-1 px-3 py-1.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-semibold bg-white"
           >
-            <ChevronRight className="w-4 h-4" />
+            Next <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>

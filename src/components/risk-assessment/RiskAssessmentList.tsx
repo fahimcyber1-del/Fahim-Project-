@@ -48,7 +48,7 @@ export function RiskAssessmentList({ records, onView, onEdit, onDelete, onNew }:
     const matchesSearch = record.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           record.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'All' || record.category === filterCategory;
-    const matchesLevel = filterLevel === 'All' || record.riskLevel === filterLevel;
+    const matchesLevel = filterLevel === 'All' || getDisplayRiskLevel(record) === filterLevel;
     return matchesSearch && matchesCategory && matchesLevel;
   });
 
@@ -71,6 +71,17 @@ export function RiskAssessmentList({ records, onView, onEdit, onDelete, onNew }:
       newSelect.add(id);
     }
     setSelectedIds(newSelect);
+  };
+
+  const getDisplayRiskLevel = (record: RiskRecord): RiskLevel => {
+    if (record.category === 'Product' && record.identifiedRisks && record.identifiedRisks.length > 0) {
+      const levels = record.identifiedRisks.map(r => r.riskLevel);
+      if (levels.includes('Critical')) return 'Critical';
+      if (levels.includes('High')) return 'High';
+      if (levels.includes('Medium')) return 'Medium';
+      return 'Low';
+    }
+    return record.riskLevel || 'Low';
   };
 
   const getLevelColor = (level: RiskLevel) => {
@@ -100,7 +111,7 @@ export function RiskAssessmentList({ records, onView, onEdit, onDelete, onNew }:
       startY: 20,
       head: [['ID', 'Title', 'Category', 'Risk Level', 'Status', 'Owner']],
       body: dataToExport.map(r => [
-        r.id, r.title, r.category, r.riskLevel, r.status, r.mitigationOwner
+        r.id, r.title, r.category, getDisplayRiskLevel(r), r.status, r.mitigationOwner || '-'
       ]),
     });
     doc.save('risks_report.pdf');
@@ -111,7 +122,7 @@ export function RiskAssessmentList({ records, onView, onEdit, onDelete, onNew }:
       ID: r.id,
       Title: r.title,
       Category: r.category,
-      RiskLevel: r.riskLevel,
+      RiskLevel: getDisplayRiskLevel(r),
       Status: r.status,
       Owner: r.mitigationOwner
     })));
@@ -285,8 +296,8 @@ export function RiskAssessmentList({ records, onView, onEdit, onDelete, onNew }:
                      <td className="px-4 py-3 font-medium text-slate-900">{record.id}</td>
                      <td className="px-4 py-3 font-medium text-slate-900">{record.title}</td>
                      <td className="px-4 py-3 text-center">
-                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${getLevelColor(record.riskLevel)}`}>
-                         {record.riskLevel}
+                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${getLevelColor(getDisplayRiskLevel(record))}`}>
+                         {getDisplayRiskLevel(record)}
                        </span>
                      </td>
                      <td className="px-4 py-3 text-center">
@@ -391,8 +402,8 @@ export function RiskAssessmentList({ records, onView, onEdit, onDelete, onNew }:
                   <div className="mt-auto pt-4 border-t border-slate-100 grid grid-cols-2 gap-4 cursor-pointer" onClick={() => onView(record.id)}>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Level</p>
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${getLevelColor(record.riskLevel)}`}>
-                        {record.riskLevel}
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${getLevelColor(getDisplayRiskLevel(record))}`}>
+                        {getDisplayRiskLevel(record)}
                       </span>
                     </div>
                     <div>

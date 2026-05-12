@@ -20,10 +20,6 @@ export function TraceabilityList({ records, onView, onCreate }: TraceabilityList
   return (
     <div className="border border-slate-200 bg-white rounded-lg shadow-sm">
       <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Traceability Records</h2>
-          <p className="text-sm font-medium text-slate-500 mt-0.5">Manage supply chain tracking and verifications</p>
-        </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -35,6 +31,8 @@ export function TraceabilityList({ records, onView, onCreate }: TraceabilityList
               className="pl-9 pr-4 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-blue-500 w-64"
             />
           </div>
+        </div>
+        <div className="flex items-center gap-2">
           <button className="p-1.5 border border-slate-300 text-slate-600 rounded bg-white hover:bg-slate-50">
             <Filter className="w-4 h-4" />
           </button>

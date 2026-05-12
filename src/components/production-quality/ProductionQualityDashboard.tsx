@@ -45,10 +45,16 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
     });
   }, [records, dateFilter, customStartDate, customEndDate]);
 
-  const totalInspected = filteredRecords.reduce((sum, r) => sum + r.inspectedQuantity, 0);
-  const totalPassed = filteredRecords.reduce((sum, r) => sum + r.passedQuantity, 0);
-  const totalDefected = filteredRecords.reduce((sum, r) => sum + r.defectedQuantity, 0);
-  const totalRejected = filteredRecords.reduce((sum, r) => sum + r.rejectedQuantity, 0);
+  const parseNumber = (val: any) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') return Number(val.replace(/,/g, '')) || 0;
+    return 0;
+  };
+
+  const totalInspected = filteredRecords.reduce((sum, r) => sum + parseNumber(r.inspectedQuantity), 0);
+  const totalPassed = filteredRecords.reduce((sum, r) => sum + parseNumber(r.passedQuantity), 0);
+  const totalDefected = filteredRecords.reduce((sum, r) => sum + parseNumber(r.defectedQuantity), 0);
+  const totalRejected = filteredRecords.reduce((sum, r) => sum + parseNumber(r.rejectedQuantity), 0);
 
   const passRate = totalInspected ? ((totalPassed / totalInspected) * 100).toFixed(1) : '0';
   const defectRate = totalInspected ? ((totalDefected / totalInspected) * 100).toFixed(1) : '0';
@@ -57,16 +63,20 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
   // Group by line for bar chart
   const lineStats = filteredRecords.reduce((acc, curr) => {
     const existing = acc.find(item => item.line === curr.line);
+    const currInspected = parseNumber(curr.inspectedQuantity);
+    const currPassed = parseNumber(curr.passedQuantity);
+    const currDefected = parseNumber(curr.defectedQuantity);
+    
     if (existing) {
-      existing.inspected += curr.inspectedQuantity;
-      existing.passed += curr.passedQuantity;
-      existing.defects += curr.defectedQuantity;
+      existing.inspected += currInspected;
+      existing.passed += currPassed;
+      existing.defects += currDefected;
     } else {
       acc.push({
         line: curr.line,
-        inspected: curr.inspectedQuantity,
-        passed: curr.passedQuantity,
-        defects: curr.defectedQuantity,
+        inspected: currInspected,
+        passed: currPassed,
+        defects: currDefected,
       });
     }
     return acc;
@@ -74,7 +84,7 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
 
   const statusData = [
     { name: 'Passed', value: totalPassed, color: '#10b981' },
-    { name: 'Reworked', value: filteredRecords.reduce((sum, r) => sum + r.reworkedQuantity, 0), color: '#f59e0b' },
+    { name: 'Reworked', value: filteredRecords.reduce((sum, r) => sum + parseNumber(r.reworkedQuantity), 0), color: '#f59e0b' },
     { name: 'Rejected', value: totalRejected, color: '#ef4444' },
   ];
 
@@ -110,10 +120,10 @@ export function ProductionQualityDashboard({ records, onLineClick }: DashboardPr
   const dateKeys = Array.from(new Set(filteredRecords.map(r => r.date))).sort();
   const trendData = dateKeys.map(date => {
     const dayRecords = filteredRecords.filter(r => r.date === date);
-    const dayInspected = dayRecords.reduce((sum, r) => sum + r.inspectedQuantity, 0);
-    const dayDefects = dayRecords.reduce((sum, r) => sum + r.defectedQuantity, 0);
+    const dayInspected = dayRecords.reduce((sum, r) => sum + parseNumber(r.inspectedQuantity), 0);
+    const dayDefects = dayRecords.reduce((sum, r) => sum + parseNumber(r.defectedQuantity), 0);
     const rate = dayInspected ? parseFloat(((dayDefects / dayInspected) * 100).toFixed(1)) : 0;
-    const dayPassed = dayRecords.reduce((sum, r) => sum + r.passedQuantity, 0);
+    const dayPassed = dayRecords.reduce((sum, r) => sum + parseNumber(r.passedQuantity), 0);
     const rft = dayInspected ? parseFloat(((dayPassed / dayInspected) * 100).toFixed(1)) : 0;
     
     // Format date string for better display (e.g. "May 01" from "2026-05-01")

@@ -18,11 +18,7 @@ export function TraceabilityDashboard({ records, onViewList }: TraceabilityDashb
 
   return (
     <div className="flex flex-col gap-4 sm:p-6 max-w-7xl mx-auto w-full">
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-2xl font-black text-slate-800">Traceability Dashboard</h2>
-          <p className="text-slate-500 font-medium mt-1">Overview of product supply chain tracing.</p>
-        </div>
+      <div className="flex justify-end mb-2">
         <button 
           onClick={onViewList}
           className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-md hover:bg-blue-700 transition-colors shadow-sm"

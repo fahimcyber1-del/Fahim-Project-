@@ -27,7 +27,7 @@ export function OrdersBuyersModule({ navigationPayload, onNavigationHandled }: O
       setActiveTab('orders');
       const order = orders.find(o => 
         (navigationPayload.styleNumber && o.styleNumber === navigationPayload.styleNumber) ||
-        (navigationPayload.poArticleNumber && o.poArticleNumber === navigationPayload.poArticleNumber)
+        (navigationPayload.poArticleNumber && (o.poArticleNumber === navigationPayload.poArticleNumber || o.poDetails?.some(pod => pod.poArticleNumber === navigationPayload.poArticleNumber)))
       );
       if (order) {
         setExternalViewOrderId(order.id);
@@ -43,7 +43,7 @@ export function OrdersBuyersModule({ navigationPayload, onNavigationHandled }: O
         setActiveTab('orders');
         const order = orders.find(o => 
           (e.detail.styleNumber && o.styleNumber === e.detail.styleNumber) ||
-          (e.detail.poArticleNumber && o.poArticleNumber === e.detail.poArticleNumber)
+          (e.detail.poArticleNumber && (o.poArticleNumber === e.detail.poArticleNumber || o.poDetails?.some(pod => pod.poArticleNumber === e.detail.poArticleNumber)))
         );
         if (order) {
           setExternalViewOrderId(order.id);

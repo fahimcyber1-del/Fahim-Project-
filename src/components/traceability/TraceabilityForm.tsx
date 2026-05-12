@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TraceabilityRecord } from './types';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
+import { useApiStorage } from '../../hooks/useApiData';
+import { INITIAL_ORDERS } from '../orders-buyers/mockData';
 
 interface TraceabilityFormProps {
   onSave: (data: TraceabilityRecord) => void;
@@ -8,9 +10,26 @@ interface TraceabilityFormProps {
 }
 
 export function TraceabilityForm({ onSave, onCancel }: TraceabilityFormProps) {
+  const [ordersRaw] = useApiStorage('aqm_ordersbuyers_orders', INITIAL_ORDERS);
+  const orders = ordersRaw.map((o: any) => {
+    const defaultOrder = INITIAL_ORDERS.find(io => io.id === o.id);
+    return {
+      ...o,
+      itemName: o.itemName || defaultOrder?.itemName || '',
+      productImage: o.productImage || defaultOrder?.productImage || ''
+    };
+  });
+
+  const [orderQuery, setOrderQuery] = useState('');
+  const [showOrderSuggestions, setShowOrderSuggestions] = useState(false);
+
   const [formData, setFormData] = useState<Partial<TraceabilityRecord>>({
     id: `TRC-2023-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
     productBatchNo: '',
+    poNumber: '',
+    styleNumber: '',
+    orderQuantity: 0,
+    productImage: '',
     type: 'GARMENT',
     status: 'IN_PROGRESS',
     date: new Date().toISOString().split('T')[0],
@@ -26,6 +45,26 @@ export function TraceabilityForm({ onSave, onCancel }: TraceabilityFormProps) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleOrderQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setOrderQuery(val);
+    setFormData(prev => ({ ...prev, poNumber: val }));
+    setShowOrderSuggestions(true);
+  };
+
+  const handleOrderSelect = (order: any) => {
+    setOrderQuery(order.poArticleNumber);
+    setShowOrderSuggestions(false);
+    
+    setFormData(prev => ({
+      ...prev,
+      poNumber: order.poArticleNumber,
+      styleNumber: order.styleNumber,
+      orderQuantity: order.quantity,
+      productImage: order.productImage,
+    }));
+  };
+
   const handleCertificationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const certs = e.target.value.split(',').map(s => s.trim()).filter(s => s);
     setFormData(prev => ({ ...prev, certifications: certs }));
@@ -38,32 +77,80 @@ export function TraceabilityForm({ onSave, onCancel }: TraceabilityFormProps) {
 
   return (
     <div className="max-w-4xl mx-auto pb-12 w-full">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={onCancel}
-            className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-2xl font-black text-slate-800">New Traceability Record</h2>
-            <p className="text-sm font-medium text-slate-500">Initiate supply chain tracking for a batch.</p>
-          </div>
-        </div>
+      <div className="flex justify-end mb-4">
+        <button 
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-bold rounded-lg hover:bg-slate-200"
+        >
+          Back to List
+        </button>
       </div>
 
       <form className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 space-y-8" onSubmit={handleSubmit}>
         <div>
           <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Batch Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:p-6">
+            <div className="col-span-2 md:col-span-1 relative">
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-2">PO / Article Number</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input 
+                  type="text" 
+                  name="poNumber"
+                  value={orderQuery} 
+                  autoComplete="off"
+                  onFocus={() => setShowOrderSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowOrderSuggestions(false), 200)}
+                  onChange={handleOrderQueryChange} 
+                  className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
+                  placeholder="Search PO number..." 
+                />
+              </div>
+              {showOrderSuggestions && orderQuery && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {orders.filter((o: any) => o.poArticleNumber?.toLowerCase().includes(orderQuery.toLowerCase()) || o.styleNumber?.toLowerCase().includes(orderQuery.toLowerCase())).map((order: any) => (
+                    <div 
+                      key={order.id} 
+                      className="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                      onMouseDown={(e) => { e.preventDefault(); handleOrderSelect(order); }}
+                    >
+                      <p className="text-sm font-bold text-slate-800">{order.poArticleNumber}</p>
+                      <p className="text-xs text-slate-500">Style: {order.styleNumber} | Qty: {order.quantity}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Product / Batch / PO No.</label>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Internal Batch No.</label>
               <input 
                 type="text" name="productBatchNo" value={formData.productBatchNo} onChange={handleChange} required
                 className="w-full px-4 py-2 border border-slate-300 rounded text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
               />
             </div>
+            
+            {(formData.styleNumber || formData.orderQuantity || formData.productImage) ? (
+              <div className="col-span-2 bg-slate-50 p-4 border border-slate-200 rounded flex gap-4">
+                {formData.productImage && (
+                  <div className="w-20 h-20 shrink-0 bg-white border border-slate-200 rounded overflow-hidden">
+                    <img src={formData.productImage} alt="Product" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div>
+                  <div className="mb-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Style Number</span>
+                    <span className="text-sm font-bold text-slate-900">{formData.styleNumber || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Order Quantity</span>
+                    <span className="text-sm font-bold text-slate-900">{formData.orderQuantity || 0}</span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <div>
               <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Material / Product Type</label>
               <select name="type" value={formData.type} onChange={handleChange} className="w-full px-4 py-2 border border-slate-300 rounded text-sm">

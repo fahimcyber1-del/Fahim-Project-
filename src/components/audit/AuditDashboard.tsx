@@ -20,11 +20,7 @@ export function AuditDashboard({ audits }: AuditDashboardProps) {
     .slice(0, 5);
 
   return (
-    <div className="flex flex-col gap-4 sm:p-6 max-w-7xl mx-auto w-full">
-      <div className="mb-2">
-        <h2 className="text-2xl font-black text-slate-800">Audit Dashboard</h2>
-        <p className="text-slate-500 font-medium mt-1">Overview of compliance and audit activities.</p>
-      </div>
+    <div className="flex flex-col gap-4 sm:p-6 max-w-7xl mx-auto w-full h-full">
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">

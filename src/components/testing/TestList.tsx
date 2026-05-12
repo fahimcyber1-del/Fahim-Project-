@@ -125,7 +125,7 @@ export function TestList({ records, onView, onCreate, onEdit, onDelete }: TestLi
   };
 
   return (
-    <div className="border border-slate-200 bg-white rounded-lg shadow-sm">
+    <div className="border border-slate-200 bg-white rounded-lg shadow-sm h-full flex flex-col">
       <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900">Testing Log</h2>
@@ -159,7 +159,7 @@ export function TestList({ records, onView, onCreate, onEdit, onDelete }: TestLi
           </div>
       </div>
       
-      <div className="p-0">
+      <div className="flex-1 flex flex-col min-h-0 bg-white">
         {/* Filters Area */}
         {isFilterOpen && (
           <div className="p-4 border-b border-slate-100 bg-slate-50 space-y-4">
@@ -226,9 +226,9 @@ export function TestList({ records, onView, onCreate, onEdit, onDelete }: TestLi
         )}
 
         {/* Table Area */}
-        <div className="overflow-x-auto min-h-[400px] pb-48">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 w-12 text-center">
                   <input 

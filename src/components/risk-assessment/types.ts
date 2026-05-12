@@ -2,9 +2,28 @@ export type RiskCategory = 'Product' | 'Process' | 'Critical Process';
 export type RiskLevel = 'Low' | 'Medium' | 'High' | 'Critical';
 export type RiskStatus = 'Draft' | 'Active' | 'Mitigated' | 'Closed';
 
+export interface RiskItem {
+  id: string;
+  description: string;
+  hazardIdentified: string;
+  severity: number;
+  likelihood: number;
+  riskScore: number;
+  riskLevel: RiskLevel;
+  mitigationPlan: string;
+  mitigationOwner: string;
+  mitigationDueDate: string;
+  residualSeverity?: number;
+  residualLikelihood?: number;
+  residualRiskScore?: number;
+  residualRiskLevel?: RiskLevel;
+}
+
 export interface RiskProductDetail {
-  itemCategory: string;
+  itemCategory?: string;
   styleNumber: string;
+  itemName?: string;
+  productImage?: string;
 }
 
 export interface RiskAttachment {
@@ -22,22 +41,23 @@ export interface RiskRecord {
   productDetails?: RiskProductDetail;
   processName?: string;
   
-  description: string;
-  hazardIdentified: string;
-  
-  severity: number; // 1-5
-  likelihood: number; // 1-5
-  riskScore: number; // severity * likelihood
-  riskLevel: RiskLevel;
-
-  mitigationPlan: string;
-  mitigationOwner: string;
-  mitigationDueDate: string;
-  
+  // Single risk approach (legacy / Process / Critical Process maybe)
+  description?: string;
+  hazardIdentified?: string;
+  severity?: number; // 1-5
+  likelihood?: number; // 1-5
+  riskScore?: number; // severity * likelihood
+  riskLevel?: RiskLevel;
+  mitigationPlan?: string;
+  mitigationOwner?: string;
+  mitigationDueDate?: string;
   residualSeverity?: number;
   residualLikelihood?: number;
   residualRiskScore?: number;
   residualRiskLevel?: RiskLevel;
+
+  // Multiple risks approach (used for Product)
+  identifiedRisks?: RiskItem[];
 
   status: RiskStatus;
   attachments?: RiskAttachment[];

@@ -67,7 +67,7 @@ export function TestingModule() {
     <div className="w-full h-full flex flex-col">
       {renderNav()}
 
-      <div className="flex-1 overflow-y-auto w-full">
+      <div className="flex-1 overflow-hidden w-full relative">
         {viewState.type === 'dashboard' && (
           <TestingDashboard 
             records={records}

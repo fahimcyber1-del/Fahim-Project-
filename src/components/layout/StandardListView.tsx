@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, Filter, LayoutGrid, List, FileText, Download, 
-  MoreVertical, Eye, Edit, Trash2, ChevronLeft, ChevronRight 
+  MoreVertical, Eye, Edit, Trash2, ChevronLeft, ChevronRight, PlusCircle
 } from 'lucide-react';
 
 interface Column<T> {
@@ -24,6 +24,7 @@ interface StandardListViewProps<T> {
   onCreate: () => void;
   createButtonLabel?: string;
   filterableFields?: (keyof T)[];
+  customFilters?: React.ReactNode;
 }
 
 export function StandardListView<T>({
@@ -38,7 +39,8 @@ export function StandardListView<T>({
   onDelete,
   onCreate,
   createButtonLabel = 'Create New',
-  filterableFields = []
+  filterableFields = [],
+  customFilters
 }: StandardListViewProps<T>) {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,69 +85,65 @@ export function StandardListView<T>({
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Header section */}
-      <div className="flex-none p-4 sm:p-6 pb-4 bg-white border-b border-slate-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900">{title}</h1>
-            <p className="text-sm text-slate-500 mt-1">{description}</p>
+    <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
+      {/* Header section (Compact) */}
+      <div className="flex-none p-3 px-4 sm:px-6 bg-slate-50 border-b border-slate-200 flex flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-1 flex-wrap">
+          <div className="relative w-full max-w-xs transition-all focus-within:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input 
+               type="text"
+               placeholder="Search records..."
+               value={searchTerm}
+               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+               className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 transition-colors shadow-sm"
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={handleGlobalExportPDF}
-              className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
-            >
-               <FileText className="w-4 h-4 text-rose-500" /> Export PDF
-            </button>
-            <button 
-              onClick={handleGlobalExportExcel}
-              className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
-            >
-               <Download className="w-4 h-4 text-emerald-500" /> Export Excel
-            </button>
-            <button 
-              onClick={onCreate}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
-            >
-              {createButtonLabel}
-            </button>
+          
+          {customFilters}
+
+          <div className="hidden lg:flex items-center gap-2">
+             <button 
+               onClick={handleGlobalExportPDF}
+               className="p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-sm"
+             >
+                <FileText className="w-3.5 h-3.5 text-rose-500" /> <span className="hidden xl:inline">Export PDF</span>
+             </button>
+             <button 
+               onClick={handleGlobalExportExcel}
+               className="p-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-sm"
+             >
+                <Download className="w-3.5 h-3.5 text-emerald-500" /> <span className="hidden xl:inline">Export Excel</span>
+             </button>
           </div>
         </div>
 
-        {/* Toolbar: Search, Filters, View Toggles */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200">
-           <div className="relative flex-1 max-w-md w-full">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-             <input 
-                type="text"
-                placeholder="Search records..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-             />
-           </div>
-           
-           <div className="flex items-center gap-2 shrink-0">
-              <button className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                 <Filter className="w-4 h-4" /> Filter
-              </button>
-              
-              <div className="flex bg-white rounded-lg border border-slate-300 p-0.5">
-                 <button 
-                    onClick={() => setViewMode('list')}
-                    className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
-                 >
-                    <List className="w-4 h-4" />
-                 </button>
-                 <button 
-                    onClick={() => setViewMode('grid')}
-                    className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
-                 >
-                    <LayoutGrid className="w-4 h-4" />
-                 </button>
-              </div>
-           </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="hidden md:flex bg-white rounded-lg border border-slate-300 p-0.5 shadow-sm">
+             <button 
+                onClick={() => setViewMode('list')}
+                className={`p-1 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
+                title="List View"
+             >
+                <List className="w-4 h-4" />
+             </button>
+             <button 
+                onClick={() => setViewMode('grid')}
+                className={`p-1 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-50'}`}
+                title="Grid View"
+             >
+                <LayoutGrid className="w-4 h-4" />
+             </button>
+          </div>
+
+          <button 
+            onClick={onCreate}
+            className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shadow-md flex items-center gap-1.5"
+          >
+            <MoreVertical className="w-3.5 h-3.5 rotate-90 sm:rotate-0 sm:hidden" />
+            <PlusCircle className="w-3.5 h-3.5 hidden sm:inline" />
+            <span>{createButtonLabel}</span>
+          </button>
         </div>
       </div>
 

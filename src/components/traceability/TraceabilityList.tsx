@@ -19,28 +19,28 @@ export function TraceabilityList({ records, onView, onCreate }: TraceabilityList
 
   return (
     <div className="border border-slate-200 bg-white rounded-lg shadow-sm">
-      <div className="border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className="relative">
+      <div className="border-b border-slate-200 px-4 py-3 flex flex-row justify-between items-center gap-4">
+        <div className="flex items-center flex-1">
+          <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search batches..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-blue-500 w-64"
+              className="pl-9 pr-4 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-blue-500 w-full"
             />
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button className="p-1.5 border border-slate-300 text-slate-600 rounded bg-white hover:bg-slate-50">
             <Filter className="w-4 h-4" />
           </button>
           <button 
             onClick={onCreate}
-            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded shadow-sm transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded shadow-sm transition-colors"
           >
-            <Plus className="w-4 h-4" /> New Record
+            <Plus className="w-4 h-4" /> <span className="hidden sm:inline">New Record</span>
           </button>
         </div>
       </div>

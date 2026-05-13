@@ -37,39 +37,36 @@ export function JobDescriptionList({ records, onView, onEdit, onDelete, onNew }:
 
   return (
     <div className="flex flex-col h-full bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-0">
-      <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4 flex-shrink-0">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
+      <div className="p-3 px-4 border-b border-slate-200 bg-slate-50 flex flex-row items-center justify-between gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="relative w-full max-w-xs">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search Job Descriptions..."
+              placeholder="Search JDs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 w-full"
+              className="pl-9 pr-4 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 w-full"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
+          <div className="hidden sm:flex items-center gap-2">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500"
+              className="px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold focus:outline-none focus:border-indigo-500 bg-white"
             >
-              <option value="All">All Statuses</option>
+              <option value="All">All Status</option>
               <option value="Active">Active</option>
               <option value="Draft">Draft</option>
               <option value="Closed">Closed</option>
               <option value="Archived">Archived</option>
             </select>
-          </div>
-          <div className="flex items-center gap-2">
             <select
               value={filterDept}
               onChange={(e) => setFilterDept(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500"
+              className="px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold focus:outline-none focus:border-indigo-500 bg-white"
             >
-              <option value="All">All Departments</option>
+              <option value="All">All Dept</option>
               {departments.map(dept => (
                  <option key={dept} value={dept}>{dept}</option>
               ))}
@@ -78,9 +75,9 @@ export function JobDescriptionList({ records, onView, onEdit, onDelete, onNew }:
         </div>
         <button
           onClick={onNew}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors whitespace-nowrap shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors whitespace-nowrap shadow-sm"
         >
-          <PlusCircle className="w-4 h-4" /> New Job Description
+          <PlusCircle className="w-4 h-4" /> <span className="hidden sm:inline">New JD</span>
         </button>
       </div>
 

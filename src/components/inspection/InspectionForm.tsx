@@ -191,7 +191,7 @@ export function InspectionForm({ initialData, onSave, onCancel }: FormProps) {
   const uniquePoNumbers = Array.from(new Set(INITIAL_ORDERS.map(o => o.poArticleNumber))).filter(Boolean);
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto pb-8 px-4 sm:px-6">
       <datalist id="po-numbers-list">
         {uniquePoNumbers.map(s => <option key={s} value={s} />)}
       </datalist>
@@ -202,7 +202,7 @@ export function InspectionForm({ initialData, onSave, onCancel }: FormProps) {
         <ArrowLeft className="w-4 h-4" /> Back to Summary
       </button>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="max-w-7xl mx-auto">
         <div className="shadow-sm border border-slate-200 bg-white rounded-lg">
           <div className="border-b border-slate-100 p-4 sm:p-6">
             <h2 className="text-lg font-bold text-slate-900">

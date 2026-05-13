@@ -244,7 +244,7 @@ export function InspectionDetail({ record, onEdit, onBack }: DetailProps) {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto pb-8 px-4 sm:px-6">
       <button 
         onClick={onBack}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"

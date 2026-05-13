@@ -57,7 +57,7 @@ export function useApiData<T>(tableName: string, fallbackData: T[]): T[] {
         }
       })
       .catch(err => {
-        console.error('Failed to fetch from API:', err, 'URL:', baseUrl);
+        console.error('Failed to fetch from API:', err, 'URL:', getBaseUrl());
       });
   }, [tableName]);
 

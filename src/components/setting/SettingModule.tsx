@@ -66,17 +66,7 @@ export function SettingModule({ navigationPayload, onNavigationHandled }: { navi
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
-      <div className="flex-none p-4 lg:p-6 pb-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <SlidersHorizontal className="w-6 h-6 text-indigo-600" />
-              Settings
-            </h1>
-            <p className="text-slate-500 text-sm mt-1 font-medium">Configure global system preferences and options</p>
-          </div>
-        </div>
-
+      <div className="flex-none pt-2 px-4 sm:px-6">
         {/* Tab Navigation */}
         <div className="flex overflow-x-auto hide-scrollbar border-b border-slate-200">
           <div className="flex space-x-1 min-w-max pb-px">
@@ -104,7 +94,7 @@ export function SettingModule({ navigationPayload, onNavigationHandled }: { navi
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-4 lg:p-6 bg-slate-50">
+      <div className="flex-1 overflow-auto p-4 lg:px-6 lg:py-4 bg-slate-50">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 min-h-full">
           {activeTab === 'overview' && <OverviewSettings />}
           {activeTab === 'profile' && <ProfileSettings />}

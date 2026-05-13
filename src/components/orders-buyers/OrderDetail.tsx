@@ -240,6 +240,7 @@ export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
     <div className="w-full bg-slate-50 min-h-full">
       {/* Header */}
       <div className="p-4 sm:p-6 pb-4 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto">
         <button 
           type="button"
           onClick={onBack}
@@ -280,6 +281,7 @@ export function OrderDetail({ order, onBack, onEdit }: OrderDetailProps) {
               <Edit className="w-4 h-4" /> Edit Order
             </button>
           </div>
+        </div>
         </div>
       </div>
 

@@ -1,582 +1,286 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { useAppearance } from "../setting/AppearanceContext";
+import React, { useMemo, useState } from 'react';
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  AreaChart,
-  Area,
-  ComposedChart,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis
-} from "recharts";
-import { AlertCircle, CheckCircle2, TrendingDown, TrendingUp, ShieldAlert, BadgeCheck, Package, LayoutList, Target, ClipboardCheck, Search, Filter, Activity } from "lucide-react";
-import { INITIAL_CAPAS } from "../capa/mockData";
-import { INITIAL_RECORDS as INITIAL_INSPECTIONS } from "../inspection/mockData";
-import { INITIAL_RECORDS as INITIAL_PRODUCTION } from "../production-quality/mockData";
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell 
+} from 'recharts';
+import { 
+  ShoppingCart, Truck, CheckSquare, Percent, TrendingDown, 
+  Search, RefreshCw, XCircle, CalendarClock, Filter 
+} from 'lucide-react';
 import { INITIAL_ORDERS } from "../orders-buyers/mockData";
-import { format, parseISO, subMonths } from "date-fns";
-import { useApiData, apiFetch, apiSave } from "../../hooks/useApiData";
+import { INITIAL_RECORDS as PROD_QA_RECORDS } from "../production-quality/mockData";
+import { INITIAL_RECORDS as INSP_RECORDS } from "../inspection/mockData";
+import { useAppearance } from '../setting/AppearanceContext';
+import { useApiStorage } from '../../hooks/useApiData';
+
+const isWithinDateRange = (dateStr: string | undefined, filter: string, customStart: string, customEnd: string) => {
+  if (!dateStr) return true;
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return true;
+
+  const now = new Date();
+  
+  if (filter === 'last_month') {
+    const threshold = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'last_3_months') {
+    const threshold = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'last_6_months') {
+    const threshold = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'last_year') {
+    const threshold = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'custom' && customStart && customEnd) {
+    return date >= new Date(customStart) && date <= new Date(customEnd);
+  }
+  return true;
+};
 
 export function Dashboard() {
   const { settings } = useAppearance();
-  let paddingClass = 'p-4 sm:p-6';
-  if (settings.spacingMode === 'compact') paddingClass = 'p-3';
-  if (settings.spacingMode === 'dense') paddingClass = 'p-4';
-  if (settings.uiSize === 'compact' || settings.uiSize === 'extra-compact') paddingClass = 'p-2';
 
-  let headerPaddingClass = 'p-4 sm:p-6';
-  if (settings.spacingMode === 'compact') headerPaddingClass = 'p-2';
-  if (settings.spacingMode === 'dense') headerPaddingClass = 'p-3';
-  if (settings.uiSize === 'compact' || settings.uiSize === 'extra-compact') headerPaddingClass = 'p-2';
-  
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | 'custom' | 'all'>('all');
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>('all');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
 
-  const rawCapas = useApiData('aqm_capa_records', INITIAL_CAPAS);
-  const rawInspections = useApiData('aqm_inspection_records', INITIAL_INSPECTIONS);
-  const rawProductions = useApiData('aqm_productionquality_records', INITIAL_PRODUCTION);
-  const rawOrders = useApiData('aqm_ordersbuyers_orders', INITIAL_ORDERS);
+  const [orders] = useApiStorage('aqm_ordersbuyers_orders', INITIAL_ORDERS);
+  const [productionRecords] = useApiStorage('aqm_productionquality_records', PROD_QA_RECORDS);
+  const [inspectionRecords] = useApiStorage('aqm_inspection_records', INSP_RECORDS);
 
-  const filterByDate = (items: any[], dateField: string) => {
-    if (dateRange === 'all') return items;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return items.filter(item => {
-      if (!item[dateField]) return true;
-      const itemDate = new Date(item[dateField]);
-      if (isNaN(itemDate.getTime())) return true;
-      
-      if (dateRange === '7d') {
-        const past = new Date(today);
-        past.setDate(today.getDate() - 7);
-        return itemDate >= past;
-      }
-      if (dateRange === '30d') {
-        const past = new Date(today);
-        past.setDate(today.getDate() - 30);
-        return itemDate >= past;
-      }
-      if (dateRange === 'custom') {
-        const start = customStartDate ? new Date(customStartDate) : null;
-        const end = customEndDate ? new Date(customEndDate) : null;
-        if (start && end) {
-          end.setHours(23, 59, 59, 999);
-          return itemDate >= start && itemDate <= end;
-        } else if (start) {
-          return itemDate >= start;
-        } else if (end) {
-          end.setHours(23, 59, 59, 999);
-          return itemDate <= end;
-        }
-        return true;
-      }
-      return true;
-    });
-  };
+  const stats = useMemo(() => {
+    const filteredOrders = orders.filter(o => isWithinDateRange(o.orderDate, dateRangeFilter, customStart, customEnd));
+    const filteredProduction = productionRecords.filter(r => isWithinDateRange(r.date, dateRangeFilter, customStart, customEnd));
+    const filteredInspections = inspectionRecords.filter(r => isWithinDateRange(r.date, dateRangeFilter, customStart, customEnd));
 
-  const capas = filterByDate(rawCapas, 'dateRaised');
-  const inspections = filterByDate(rawInspections, 'date');
-  const productions = filterByDate(rawProductions, 'date');
-  const orders = filterByDate(rawOrders, 'orderDate');
+    // Orders
+    const totalOrderQty = filteredOrders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+    const totalShippedQty = filteredOrders.filter(o => o.status === 'Completed' || o.status === 'Shipped')
+      .reduce((sum, order) => sum + (order.quantity || 0), 0);
 
-  const data = { capas, inspections, productions, orders };
+    // Prod QA
+    const totalProdCheckQty = filteredProduction.reduce((sum, r) => sum + (r.inspectedQuantity || 0), 0);
+    const totalProdPassedQty = filteredProduction.reduce((sum, r) => sum + (r.passedQuantity || 0), 0);
+    const totalProdDefectsQty = filteredProduction.reduce((sum, r) => sum + (r.defectedQuantity || 0), 0);
+    const rftPercentage = totalProdCheckQty > 0 ? (totalProdPassedQty / totalProdCheckQty) * 100 : 0;
+    const dhuPercentage = totalProdCheckQty > 0 ? (totalProdDefectsQty / totalProdCheckQty) * 100 : 0;
 
-  // Compute Metrics
-  let totalInspected = 0;
-  let totalPassed = 0;
-  let totalDefected = 0;
-  
-  const parseNumber = (val: any) => {
-    if (typeof val === 'number') return isNaN(val) ? 0 : val;
-    if (typeof val === 'string') {
-      const cleaned = val.replace(/,/g, '').trim();
-      if (!cleaned) return 0;
-      const num = Number(cleaned);
-      return isNaN(num) ? 0 : num;
-    }
-    return 0;
-  };
-
-  data.productions.forEach((p: any) => {
-    totalInspected += parseNumber(p.inspectedQuantity);
-    totalPassed += parseNumber(p.passedQuantity);
-    totalDefected += parseNumber(p.defectedQuantity);
-  });
-
-  let totalOrderPcs = 0;
-  data.orders.forEach((o: any) => {
-    totalOrderPcs += parseNumber(o.quantity);
-  });
-
-  let totalInspectionQty = 0;
-  let totalInspectionPassQty = 0;
-  let totalInspectionFailQty = 0;
-
-  data.inspections.forEach((i: any) => {
-    const qty = parseNumber(i.inspectedQuantity);
-    totalInspectionQty += qty;
-    if (i.status === 'Pass' || i.status === 'Accept') {
-      totalInspectionPassQty += qty;
-    } else if (i.status === 'Fail' || i.status === 'Recheck' || i.status === 'Reject') {
-      totalInspectionFailQty += qty;
-    }
-  });
-
-  const qualityPassRate = totalInspected > 0 ? (totalPassed / totalInspected) * 100 : 0;
-  const totalDHU = totalInspected > 0 ? (totalDefected / totalInspected) * 100 : 0;
-  
-  // Guard against any NaN results from divisions just in case
-  const safeQualityPassRate = isNaN(qualityPassRate) ? 0 : qualityPassRate;
-  const safeTotalDHU = isNaN(totalDHU) ? 0 : totalDHU;
-
-  const activeCapas = data.capas.filter((c: any) => c.status !== 'Closed').length;
-
-  const pendingInspections = data.inspections.filter((i: any) => i.status === 'Pending' || i.status === 'Recheck').length;
-  const resolvedIssues = data.capas.filter((c: any) => c.status === 'Closed').length;
-
-  const rftRateData = [
-    { name: "RFT (Pass)", value: qualityPassRate, color: "#10b981" },
-    { name: "Fail/Rework", value: 100 - qualityPassRate, color: "#ef4444" },
-  ];
-
-  // Compile defect types
-  const defectCounts: Record<string, number> = {};
-  data.productions.forEach((p: any) => {
-    p.topDefects?.forEach((d: any) => {
-      defectCounts[d.type] = (defectCounts[d.type] || 0) + d.count;
-    });
-  });
-
-  const defectTypesData = Object.entries(defectCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5); // top 5
-
-  // Compile defect trend (last 6 months)
-  const today = new Date();
-  const months = Array.from({ length: 6 }).map((_, i) => {
-    const d = subMonths(today, 5 - i);
-    return {
-      monthStr: format(d, 'yyyy-MM'),
-      label: format(d, 'MMM')
-    };
-  });
-
-  const defectTrendData = months.map(m => {
-    const matchingProductions = data.productions.filter((p: any) => p.date && p.date.startsWith(m.monthStr));
-    const totalDefects = matchingProductions.reduce((sum: number, p: any) => sum + parseNumber(p.defectedQuantity), 0);
-    return {
-      month: m.label,
-      defects: totalDefects
-    };
-  });
-
-  // Quality Radar Data based on inspection categories
-  const radarCategories = ['workmanship', 'measurement', 'productSafety', 'labeling', 'packing', 'shippingMark'];
-  const radarData = radarCategories.map(cat => {
-    let total = 0;
-    let passed = 0;
-    data.inspections.forEach((i: any) => {
-      if (i[cat] && i[cat] !== 'N/A') {
-        total++;
-        if (i[cat] === 'Pass' || i[cat] === 'Accept') passed++;
+    // Top 5 Defects
+    const defectMap: Record<string, number> = {};
+    filteredProduction.forEach(record => {
+      if (record.topDefects) {
+        record.topDefects.forEach(defect => {
+          defectMap[defect.type] = (defectMap[defect.type] || 0) + defect.count;
+        });
       }
     });
+    const topDefects = Object.keys(defectMap)
+      .map(key => ({ name: key, count: defectMap[key] }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
 
-    // Handle dummy or random initial data if calculations yield 0
-    let rate = 0;
-    if (total > 0) {
-      rate = (passed / total) * 100;
-    } else {
-      const mockRates: Record<string, number> = {
-        workmanship: 85,
-        measurement: 92,
-        productSafety: 100,
-        labeling: 90,
-        packing: 88,
-        shippingMark: 94
-      };
-      rate = mockRates[cat] || 90;
-    }
+    // Inspections (Final Only for Check Qty, Recheck, Fail)
+    const finalInspections = filteredInspections.filter(r => r.category === 'Final');
+    const totalInspCheckQty = finalInspections.reduce((sum, r) => sum + (r.inspectedQuantity || 0), 0);
+    const totalInspRecheckQty = finalInspections.filter(r => r.status === 'Recheck')
+      .reduce((sum, r) => sum + (r.inspectedQuantity || 0), 0);
+    const totalInspFailQty = finalInspections.filter(r => r.status === 'Fail')
+      .reduce((sum, r) => sum + (r.inspectedQuantity || 0), 0);
 
-    const names: Record<string, string> = {
-      workmanship: 'Workmanship',
-      measurement: 'Measurement',
-      productSafety: 'Safety',
-      labeling: 'Labeling',
-      packing: 'Packing',
-      shippingMark: 'Shipping'
-    };
+    const recentInspections = [...filteredInspections]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+
+    const upcomingDeliveries = [...filteredOrders]
+      .filter(o => o.status !== 'Completed' && o.status !== 'Shipped')
+      .filter(o => o.deliveryDate)
+      .sort((a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime())
+      .slice(0, 5);
+
     return {
-      subject: names[cat] || cat,
-      score: parseInt(rate.toFixed(0)),
-      fullMark: 100,
+      totalOrderQty,
+      totalShippedQty,
+      totalProdCheckQty,
+      rftPercentage,
+      dhuPercentage,
+      topDefects,
+      totalInspCheckQty,
+      totalInspRecheckQty,
+      totalInspFailQty,
+      recentInspections: recentInspections.length > 0 ? recentInspections : filteredInspections.slice(0, 5),
+      upcomingDeliveries,
     };
-  });
+  }, [orders, productionRecords, inspectionRecords, dateRangeFilter, customStart, customEnd]);
 
-  // Composed Volume vs Target Data
-  const prodTrendData = months.map(m => {
-    const matchingProductions = data.productions.filter((p: any) => p.date && p.date.startsWith(m.monthStr));
-    const totalIns = matchingProductions.reduce((sum: number, p: any) => sum + parseNumber(p.inspectedQuantity), 0);
-    const totalPass = matchingProductions.reduce((sum: number, p: any) => sum + parseNumber(p.passedQuantity), 0);
-    const pRate = totalIns > 0 ? (totalPass / totalIns) * 100 : 0;
-    
-    return {
-      month: m.label,
-      inspected: totalIns,
-      passed: totalPass,
-      rftRate: parseFloat(pRate.toFixed(1))
-    };
-  });
-
-  const handleNavigate = (module: string) => {
-    window.dispatchEvent(new CustomEvent('app-navigate', { detail: { module } }));
-  };
-
-    const topMetrics = [
-    { title: "Total Order Pcs", value: totalOrderPcs.toLocaleString(), icon: Package, color: "text-blue-600", bg: "bg-blue-50/50", border: 'border-blue-100', route: 'orders_and_buyers' },
-    { title: "Total DHU", value: `${safeTotalDHU.toFixed(1)}%`, icon: Target, color: "text-rose-600", bg: "bg-rose-50/50", border: 'border-rose-100', route: 'production_quality' },
-    { title: "Avg RFT Percentage", value: `${safeQualityPassRate.toFixed(1)}%`, icon: ClipboardCheck, color: "text-emerald-600", bg: "bg-emerald-50/50", border: 'border-emerald-100', route: 'production_quality' }
-  ];
-
-  const inspectionMetrics = [
-    { title: "Total Pass Qty", value: (totalInspectionPassQty || 0).toLocaleString(), icon: CheckCircle2, color: "text-emerald-600", border: "border-emerald-200", route: 'inspection' },
-    { title: "Total Fail/Recheck Qty", value: (totalInspectionFailQty || 0).toLocaleString(), icon: AlertCircle, color: "text-rose-600", border: "border-rose-200", route: 'inspection' }
-  ];
-
-  const secondaryMetrics = [
-    { title: "Pending Inspections", value: pendingInspections, icon: ShieldAlert, color: "text-amber-600", bg: "bg-amber-50" },
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 }
+  const getAccentHex = (accent: string) => {
+    switch(accent) {
+      case 'rose': return '#f43f5e';
+      case 'purple': return '#a855f7';
+      case 'blue': return '#3b82f6';
+      case 'emerald': return '#10b981';
+      case 'amber': return '#f59e0b';
+      case 'indigo': 
+      default: return '#6366f1';
     }
   };
+  const accentHex = getAccentHex(settings.accent);
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
-    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100, damping: 15 } }
-  };
-
-  let dashboardGlobalClass = "";
-  let baseCardClass = "shadow-sm border-slate-200 bg-white";
-  let metricCardClass = "shadow-sm border border-slate-200 text-slate-900 hover:shadow-md transition-all duration-300";
-  let headerTextClass = "text-slate-800";
-  let valueTextClass = "text-slate-900";
-
-  if (settings.dashboardStyle === 'analytics') {
-    dashboardGlobalClass = "bg-slate-900 text-slate-200 p-4 rounded-xl shadow-inner border border-slate-800";
-    baseCardClass = "bg-slate-950 border-slate-800 text-slate-200 shadow-md shadow-slate-900/50";
-    metricCardClass = "bg-slate-950 border border-slate-800 hover:border-indigo-500 shadow-lg text-slate-100 transition-all duration-300";
-    headerTextClass = "text-slate-100";
-    valueTextClass = "text-white";
-  } else if (settings.dashboardStyle === 'executive') {
-    dashboardGlobalClass = "bg-[#fdfdfc] font-serif";
-    baseCardClass = "bg-white border-0 border-t-4 border-t-slate-800 shadow-md rounded-none";
-    metricCardClass = "bg-white border-0 border-t-4 border-t-slate-800 hover:-translate-y-1 shadow-md text-slate-900 rounded-none transition-transform duration-300";
-    headerTextClass = "text-slate-900";
-    valueTextClass = "text-slate-900";
-  } else if (settings.dashboardStyle === 'minimal') {
-    dashboardGlobalClass = "bg-white";
-    baseCardClass = "bg-slate-50/50 border-transparent shadow-none";
-    metricCardClass = "bg-slate-50 border-none shadow-none hover:bg-slate-100 text-slate-900 transition-colors duration-300";
-    headerTextClass = "text-slate-800";
-    valueTextClass = "text-slate-900";
+  // Apply Appearance Settings to layout classes
+  const spacingClass = settings.spacingMode === 'compact' ? 'gap-2' : settings.spacingMode === 'dense' ? 'gap-3' : 'gap-6';
+  const paddingClass = settings.spacingMode === 'compact' ? 'p-2' : settings.spacingMode === 'dense' ? 'p-4' : 'p-6';
+  
+  let baseCardClass = "bg-white rounded-xl border border-slate-200 overflow-hidden";
+  if (settings.cardStyle === 'flat') {
+    baseCardClass = "bg-white rounded-xl";
+  } else if (settings.cardStyle === 'shadow') {
+    baseCardClass = "bg-white rounded-xl shadow-sm border border-slate-200";
+  } else if (settings.cardStyle === 'outline') {
+    baseCardClass = "bg-white rounded-xl border-2 border-slate-200";
+  } else if (settings.cardStyle === 'brutalist') {
+    baseCardClass = "bg-white rounded-none border-2 border-slate-900 shadow-[4px_4px_0_0_#0f172a]";
   }
 
-  const axisTextColor = settings.dashboardStyle === 'analytics' ? '#94a3b8' : '#64748b';
-  const gridColor = settings.dashboardStyle === 'analytics' ? '#334155' : '#e2e8f0';
-  const tooltipBg = settings.dashboardStyle === 'analytics' ? '#0f172a' : '#ffffff';
-  const tooltipText = settings.dashboardStyle === 'analytics' ? '#f8fafc' : '#0f172a';
-  const tooltipBorder = settings.dashboardStyle === 'analytics' ? '#334155' : '#e2e8f0';
+  const metricCards = [
+    { title: "Total Order Qty", value: stats.totalOrderQty.toLocaleString(), icon: ShoppingCart, color: "text-blue-600", bg: "bg-blue-50", border: 'border-blue-200' },
+    { title: "Shipped Qty", value: stats.totalShippedQty.toLocaleString(), icon: Truck, color: "text-emerald-600", bg: "bg-emerald-50", border: 'border-emerald-200' },
+    { title: "Total Check Qty", value: stats.totalProdCheckQty.toLocaleString(), icon: CheckSquare, color: "text-indigo-600", bg: "bg-indigo-50", border: 'border-indigo-200' },
+    { title: "DHU %", value: stats.dhuPercentage.toFixed(2) + "%", icon: TrendingDown, color: "text-rose-600", bg: "bg-rose-50", border: 'border-rose-200' },
+    { title: "RFT %", value: stats.rftPercentage.toFixed(2) + "%", icon: Percent, color: "text-emerald-600", bg: "bg-emerald-50", border: 'border-emerald-200' },
+    { title: "Final Insp Qty", value: stats.totalInspCheckQty.toLocaleString(), icon: Search, color: "text-amber-600", bg: "bg-amber-50", border: 'border-amber-200' },
+    { title: "Total Recheck", value: stats.totalInspRecheckQty.toLocaleString(), icon: RefreshCw, color: "text-purple-600", bg: "bg-purple-50", border: 'border-purple-200' },
+    { title: "Total Fail", value: stats.totalInspFailQty.toLocaleString(), icon: XCircle, color: "text-rose-600", bg: "bg-rose-50", border: 'border-rose-200' },
+  ];
 
   return (
-    <motion.div 
-      className={`flex flex-col ${settings.spacingMode === 'compact' ? 'gap-2 p-1' : settings.spacingMode === 'dense' ? 'gap-3 p-3' : 'gap-6 p-4 sm:p-6'} w-full ${dashboardGlobalClass}`}
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-    >
-      {/* Dashboard Header & Filter */}
-      <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center ${settings.spacingMode === 'compact' ? 'px-1' : 'px-2'} gap-4`}>
-        <div className={settings.dashboardStyle === 'minimal' ? 'hidden' : 'block'}>
-           {settings.dashboardStyle === 'executive' ? (
-             <h1 className="text-3xl font-serif text-slate-900 tracking-tight">Executive Summary</h1>
-           ) : settings.dashboardStyle === 'analytics' ? (
-             <h1 className="text-xl font-mono text-indigo-700 uppercase tracking-widest font-bold">Analytics Panel</h1>
-           ) : (
-             <h1 className="text-2xl font-bold text-slate-800">Overview</h1>
-           )}
+    <div className={`w-full max-w-7xl mx-auto ${paddingClass}`}>
+      <div className="flex flex-row flex-wrap justify-end items-center mb-4 gap-2">
+        <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm">
+          <Filter className="w-4 h-4 text-slate-500" />
+          <select 
+            value={dateRangeFilter} 
+            onChange={e => setDateRangeFilter(e.target.value)}
+            className="text-sm bg-transparent border-none focus:ring-0 text-slate-700 font-medium cursor-pointer outline-none"
+          >
+            <option value="all">All Time</option>
+            <option value="last_month">Last Month</option>
+            <option value="last_3_months">Last 3 Months</option>
+            <option value="last_6_months">Last 6 Months</option>
+            <option value="last_year">Last Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
         </div>
-        
-        <div className="flex justify-end w-full sm:w-auto items-center">
-          <div className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-slate-200 shadow-sm shrink-0">
-             <Filter className="w-4 h-4 text-slate-400 ml-2" />
-             <select 
-               value={dateRange}
-               onChange={(e) => setDateRange(e.target.value as any)}
-               className="bg-transparent border-none text-sm font-medium text-slate-700 outline-none focus:ring-0 cursor-pointer pr-2"
-             >
-               <option value="all">All Time</option>
-               <option value="7d">Last 7 Days</option>
-               <option value="30d">Last 30 Days</option>
-               <option value="custom">Custom Range</option>
-             </select>
+        {dateRangeFilter === 'custom' && (
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+            <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="text-sm border-none bg-transparent focus:ring-0 outline-none text-slate-700" />
+            <span className="text-slate-400 text-sm">to</span>
+            <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="text-sm border-none bg-transparent focus:ring-0 outline-none text-slate-700" />
           </div>
-        </div>
+        )}
       </div>
 
-      {dateRange === 'custom' && (
-        <div className="flex justify-end px-6 md:px-0">
-           <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-              <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="text-sm border border-slate-200 rounded px-2 py-1 outline-none focus:border-indigo-500" />
-              <span className="text-slate-400 text-sm">to</span>
-              <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="text-sm border border-slate-200 rounded px-2 py-1 outline-none focus:border-indigo-500" />
-           </div>
-        </div>
-      )}
-
-      {/* Top Main Metrics */}
-      <div className={`grid ${settings.spacingMode === 'compact' ? 'gap-1.5' : settings.spacingMode === 'dense' ? 'gap-3' : 'gap-4'} ${settings.dashboardStyle === 'analytics' ? 'md:grid-cols-4 lg:grid-cols-4' : settings.dashboardStyle === 'executive' ? 'md:grid-cols-2 lg:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'} shrink-0`}>
-        {topMetrics.map((metric, i) => (
-          <motion.div key={i} variants={itemVariants} whileHover={{ y: -4 }}>
-            <Card onClick={() => handleNavigate(metric.route)} className={`relative overflow-hidden cursor-pointer ${metricCardClass} h-full`}>
-              <div className="absolute top-0 right-0 -mr-4 -mt-4 opacity-10 pointer-events-none">
-                 <metric.icon className="w-32 h-32" />
-              </div>
-              <CardContent className={`${paddingClass} relative z-10 flex flex-col justify-between h-full`}>
-                <div className="flex items-center justify-between pb-2">
-                  <p className={`text-xs uppercase font-bold tracking-wider z-10 relative ${headerTextClass}`}>{metric.title}</p>
-                  <div className={`p-2 rounded-lg bg-white/60 shadow-sm ${metric.color} z-10 relative shrink-0`}>
-                     <metric.icon className="h-5 w-5" />
-                  </div>
-                </div>
-                <p className={`font-black tracking-tight mt-2 ${valueTextClass} ${settings.dashboardStyle === 'executive' ? 'text-4xl sm:text-5xl' : settings.uiSize === 'compact' ? 'text-2xl' : 'text-3xl xl:text-4xl'}`}>{metric.value}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Inspection Metrics */}
-      <div className={`grid ${settings.spacingMode === 'compact' ? 'gap-1.5' : settings.spacingMode === 'dense' ? 'gap-3' : 'gap-4'} md:grid-cols-2 shrink-0`}>
-        {inspectionMetrics.map((metric) => (
-          <div key={metric.title} className="hover:scale-[1.02] transition-transform duration-200">
-            <Card onClick={() => handleNavigate(metric.route)} className={`cursor-pointer ${metricCardClass}` + (settings.dashboardStyle === 'default' ? ` border-l-4 ${metric.border}` : '') + ` h-full`}>
-              <CardContent className={`${paddingClass} flex items-center justify-between`}>
-                <div>
-                  <p className={`text-[10px] uppercase font-bold mb-1 ${headerTextClass}`}>{metric.title}</p>
-                  <p className={`font-black ${valueTextClass} ${settings.uiSize === 'compact' ? 'text-2xl' : 'text-3xl'}`}>{metric.value || '0'}</p>
-                </div>
-                <div className={`w-12 h-12 rounded-full flex shrink-0 items-center justify-center bg-slate-100 ${metric.color}`}>
-                   <metric.icon className="h-6 w-6" />
-                </div>
-              </CardContent>
-            </Card>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${spacingClass} mb-6`}>
+        {metricCards.map((metric, idx) => (
+          <div key={idx} className={`${baseCardClass} p-5 flex items-center justify-between`}>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{metric.title}</p>
+              <h3 className="text-2xl font-bold text-slate-800">{metric.value}</h3>
+            </div>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${metric.bg} ${metric.color}`}>
+              <metric.icon className="w-6 h-6" />
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Secondary Metrics */}
-      {settings.dashboardStyle !== 'minimal' && (
-        <div className={`grid ${settings.spacingMode === 'compact' ? 'gap-1.5' : settings.spacingMode === 'dense' ? 'gap-3' : 'gap-4'} md:grid-cols-2 lg:grid-cols-4 shrink-0`}>
-          {secondaryMetrics.map((metric, i) => (
-            <motion.div key={i} variants={itemVariants} className="h-full">
-              <Card className={`h-full ${baseCardClass}`}>
-                <CardContent className={`${paddingClass} flex items-center gap-4 h-full`}>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${metric.bg} ${metric.color}`}>
-                     <metric.icon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className={`text-[10px] uppercase font-bold mb-0.5 ${headerTextClass}`}>{metric.title}</p>
-                    <p className={`font-black ${valueTextClass} ${settings.uiSize === 'compact' ? 'text-xl' : 'text-2xl'}`}>{metric.value}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+      <div className={`grid grid-cols-1 lg:grid-cols-3 ${spacingClass}`}>
+        {/* Top 5 Defect Chart */}
+        <div className={`${baseCardClass} flex flex-col`}>
+          <div className="p-5 border-b border-slate-100">
+            <h3 className="font-semibold text-slate-800">Top 5 Defects</h3>
+          </div>
+          <div className="p-5 flex-1 min-h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.topDefects} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} width={120} />
+                <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={24}>
+                  {stats.topDefects.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={accentHex} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      )}
 
-      <motion.div variants={itemVariants} className={`grid ${settings.spacingMode === 'compact' ? 'gap-1.5' : settings.spacingMode === 'dense' ? 'gap-3' : 'gap-4'} md:grid-cols-2 lg:grid-cols-7 flex-1 min-h-0`}>
-        {settings.dashboardStyle !== 'executive' && settings.dashboardStyle !== 'minimal' && (
-          <Card className={`col-span-1 lg:col-span-4 flex flex-col ${baseCardClass}`}>
-            <CardHeader className={`${headerPaddingClass} flex justify-between items-center -mb-2`}>
-              <CardTitle className={headerTextClass}>Defect Volume Trend</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <div className="h-[220px] w-full mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={defectTrendData} margin={{ top: 10, right: 20, bottom: 5, left: 0 }}>
-                    <defs>
-                      <linearGradient id="colorDefects" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: tooltipText, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      itemStyle={{ color: tooltipText, fontWeight: 'bold' }}
-                      formatter={(value: any) => [value, 'Defects']}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="defects" 
-                      stroke="#2563eb" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorDefects)" 
-                      activeDot={{ r: 6, fill: "#2563eb", stroke: "#ffffff", strokeWidth: 2 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Upcoming Deliveries */}
+        <div className={`${baseCardClass} flex flex-col`}>
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800">Near CRD Orders</h3>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('app-navigate', { detail: { module: 'orders' } }))} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+              View All
+            </button>
+          </div>
+          <div className="p-0 flex-1">
+            <ul className="divide-y divide-slate-100">
+              {stats.upcomingDeliveries.map((delivery, idx) => (
+                <li key={idx} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-slate-800 text-sm">{delivery.buyerName} - {delivery.poArticleNumber}</span>
+                    <span className="text-slate-500 text-xs mt-0.5">Style: {delivery.styleNumber}</span>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <span className="text-xs font-semibold px-2 py-1 bg-rose-50 text-rose-600 rounded-md">
+                      {delivery.deliveryDate}
+                    </span>
+                    <span className="text-slate-500 text-xs mt-1">Qty: {delivery.quantity?.toLocaleString() || '-'}</span>
+                  </div>
+                </li>
+              ))}
+              {stats.upcomingDeliveries.length === 0 && (
+                <li className="p-8 text-center text-slate-500 text-sm">No upcoming deliveries</li>
+              )}
+            </ul>
+          </div>
+        </div>
 
-        <Card className={`col-span-1 ${settings.dashboardStyle === 'executive' || settings.dashboardStyle === 'minimal' ? 'lg:col-span-3' : 'lg:col-span-3'} flex flex-col ${baseCardClass}`}>
-          <CardHeader className={`${headerPaddingClass} -mb-2`}>
-            <CardTitle className={headerTextClass}>Overall RFT Rate Status</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center flex-col items-center flex-1 relative">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none mt-2">
-                <div className="text-center">
-                 <p className={`text-3xl font-black ${valueTextClass}`}>{safeQualityPassRate.toFixed(1)}%</p>
-                 <p className={`text-[10px] ${headerTextClass} opacity-80 font-bold uppercase tracking-widest mt-0.5`}>Average RFT</p>
-               </div>
-            </div>
-            <div className="h-[200px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={rftRateData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                    cornerRadius={4}
-                  >
-                    {rftRateData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: tooltipText, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                     itemStyle={{ color: tooltipText, fontWeight: 'bold' }}
-                     formatter={(value: any) => `${Number(value).toFixed(1)}%`}
-                  />
-                  <Legend verticalAlign="bottom" height={36} formatter={(value) => <span style={{ color: axisTextColor, fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{value}</span>} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={`col-span-1 ${settings.dashboardStyle === 'executive' || settings.dashboardStyle === 'minimal' ? 'lg:col-span-4' : 'lg:col-span-4'} flex flex-col ${baseCardClass}`}>
-          <CardHeader className={`${headerPaddingClass} -mb-2`}>
-            <CardTitle className={headerTextClass}>Production Volume vs RFT Rate</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <div className="h-[220px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={prodTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} dy={10} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} />
-                  <YAxis yAxisId="right" orientation="right" domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} tickFormatter={(val) => `${val}%`} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: tooltipText, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    itemStyle={{ color: tooltipText, fontWeight: 'bold' }}
-                    formatter={(value: any, name: string) => [
-                      name === 'RFT Rate (%)' ? `${Number(value).toFixed(1)}%` : Number(value).toLocaleString(),
-                      name
-                    ]}
-                  />
-                  <Legend verticalAlign="bottom" height={36} formatter={(value) => <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{value}</span>} />
-                  <Bar yAxisId="left" dataKey="inspected" name="Inspected" fill="#e2e8f0" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Bar yAxisId="left" dataKey="passed" name="Passed" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                  <Line yAxisId="right" type="monotone" name="RFT Rate (%)" dataKey="rftRate" stroke="#6366f1" strokeWidth={3} dot={{r: 4, strokeWidth: 0, fill: '#6366f1'}} activeDot={{ r: 6 }} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {settings.dashboardStyle !== 'minimal' && (
-          <Card className={`col-span-1 ${settings.dashboardStyle === 'executive' ? 'lg:col-span-7' : 'lg:col-span-3'} flex flex-col ${baseCardClass}`}>
-            <CardHeader className={`${headerPaddingClass} -mb-2`}>
-              <CardTitle className={headerTextClass}>Quality Categories Scan</CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center flex-col items-center flex-1">
-              <div className="h-[220px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                    <PolarGrid stroke={gridColor} />
-                    <PolarAngleAxis dataKey="subject" tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{fontSize: 10, fill: axisTextColor}} />
-                    <Radar name="Pass Score" dataKey="score" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: tooltipText, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      itemStyle={{ color: tooltipText, fontWeight: 'bold' }}
-                      formatter={(value: any) => [`${value}%`, 'Pass Score']}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {settings.dashboardStyle !== 'minimal' && settings.dashboardStyle !== 'executive' && (
-          <Card className={`col-span-1 lg:col-span-7 flex flex-col ${baseCardClass}`}>
-            <CardHeader className={`${headerPaddingClass} -mb-2`}>
-              <CardTitle className={headerTextClass}>Defect Distribution by Type</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <div className="h-[200px] w-full mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={defectTypesData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={gridColor} />
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} />
-                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{fill: axisTextColor, fontSize: 10, fontWeight: 'bold'}} width={120} />
-                    <Tooltip cursor={{fill: settings.dashboardStyle === 'analytics' ? '#1e293b' : '#f1f5f9'}} contentStyle={{ borderRadius: '8px', border: `1px solid ${tooltipBorder}`, backgroundColor: tooltipBg, color: tooltipText, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} itemStyle={{ color: tooltipText, fontWeight: 'bold' }} formatter={(value: any) => [value, 'Count']} />
-                    <Bar dataKey="count" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={24} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </motion.div>
-    </motion.div>
+        {/* Recent Inspections List */}
+        <div className={`${baseCardClass} flex flex-col`}>
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800">Recent Inspections</h3>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('app-navigate', { detail: { module: 'inspection' } }))} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+              View All
+            </button>
+          </div>
+          <div className="p-0 flex-1">
+            <ul className="divide-y divide-slate-100">
+              {stats.recentInspections.map((insp, idx) => (
+                <li key={idx} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-slate-800 text-sm">{insp.buyer} - {insp.poNumber}</span>
+                    <span className="text-slate-500 text-xs mt-0.5">Style: {insp.styleNumber}</span>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-md">
+                      {insp.crdDate || insp.date}
+                    </span>
+                    <span className="text-slate-500 text-xs mt-1">Qty: {insp.inspectedQuantity}</span>
+                  </div>
+                </li>
+              ))}
+              {stats.recentInspections.length === 0 && (
+                <li className="p-8 text-center text-slate-500 text-sm">No recent inspections</li>
+              )}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

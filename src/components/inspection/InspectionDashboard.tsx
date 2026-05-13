@@ -1,13 +1,50 @@
-import React from 'react';
-import { InspectionRecord } from './types';
+import React, { useState } from 'react';
+import { InspectionRecord, InspectionCategory } from './types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { CheckCircle2, AlertTriangle, XCircle, Activity } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Activity, Filter } from 'lucide-react';
 
 interface DashboardProps {
   records: InspectionRecord[];
 }
 
-export function InspectionDashboard({ records }: DashboardProps) {
+const isWithinDateRange = (dateStr: string | undefined, filter: string, customStart: string, customEnd: string) => {
+  if (!dateStr) return true;
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return true;
+
+  const now = new Date();
+  
+  if (filter === 'last_month') {
+    const threshold = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'last_3_months') {
+    const threshold = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'last_6_months') {
+    const threshold = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'last_year') {
+    const threshold = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+    return date >= threshold;
+  }
+  if (filter === 'custom' && customStart && customEnd) {
+    return date >= new Date(customStart) && date <= new Date(customEnd);
+  }
+  return true;
+};
+
+export function InspectionDashboard({ records: allRecords }: DashboardProps) {
+  const [filterCategory, setFilterCategory] = useState<InspectionCategory | 'All'>('All');
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>('all');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
+
+  const records = (filterCategory === 'All' ? allRecords : allRecords.filter(r => r.category === filterCategory))
+    .filter(r => isWithinDateRange(r.date, dateRangeFilter, customStart, customEnd));
+
   const parseNumber = (val: any) => {
     if (typeof val === 'number') return val;
     if (typeof val === 'string') return Number(val.replace(/,/g, '')) || 0;
@@ -56,7 +93,47 @@ export function InspectionDashboard({ records }: DashboardProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:p-6">
+      <div className="flex flex-row flex-wrap justify-end items-center px-4 sm:px-6 pt-4 gap-2">
+        <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm">
+          <Filter className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-medium text-slate-700">Category:</span>
+          <select 
+            value={filterCategory} 
+            onChange={e => setFilterCategory(e.target.value as InspectionCategory | 'All')}
+            className="text-sm bg-transparent border-none focus:ring-0 text-slate-700 font-medium cursor-pointer ml-1 outline-none"
+          >
+            <option value="All">All Categories</option>
+            <option value="Inline">Inline</option>
+            <option value="Prefinal">Prefinal</option>
+            <option value="Final">Final Inspection</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm">
+          <Filter className="w-4 h-4 text-slate-500" />
+          <select 
+            value={dateRangeFilter} 
+            onChange={e => setDateRangeFilter(e.target.value)}
+            className="text-sm bg-transparent border-none focus:ring-0 text-slate-700 font-medium cursor-pointer outline-none"
+          >
+            <option value="all">All Time</option>
+            <option value="last_month">Last Month</option>
+            <option value="last_3_months">Last 3 Months</option>
+            <option value="last_6_months">Last 6 Months</option>
+            <option value="last_year">Last Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        {dateRangeFilter === 'custom' && (
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+            <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="text-sm border-none bg-transparent focus:ring-0 outline-none text-slate-700" />
+            <span className="text-slate-400 text-sm">to</span>
+            <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="text-sm border-none bg-transparent focus:ring-0 outline-none text-slate-700" />
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 px-4 sm:px-6">
         <div className="shadow-sm border border-slate-200 bg-white rounded-lg p-5">
             <div className="flex justify-between items-center pb-2">
               <p className="text-[10px] uppercase font-bold text-slate-500">Total Inspected</p>
@@ -107,7 +184,7 @@ export function InspectionDashboard({ records }: DashboardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-4 sm:px-6 pb-6">
         <div className="shadow-sm border border-slate-200 bg-white rounded-lg lg:col-span-2">
           <div className="border-b border-slate-100 p-4 font-bold text-sm">Inspection Category Performance</div>
           <div className="p-4">

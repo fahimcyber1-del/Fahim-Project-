@@ -744,7 +744,7 @@ function OrderForm({ order, buyers, onSave, onCancel }: { order: Order | null, b
   }
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-lg border border-slate-200">
+    <div className="bg-white p-4 sm:p-6 rounded-lg border border-slate-200 shadow-sm max-w-7xl mx-auto">
       <h3 className="text-lg font-bold text-slate-900 mb-6">{order ? 'Edit Order' : 'Add New Order'}</h3>
       <form onSubmit={handleSubmit} className="space-y-6">
         
